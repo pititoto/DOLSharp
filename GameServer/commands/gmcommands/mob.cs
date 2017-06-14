@@ -199,6 +199,7 @@ namespace DOL.GS.Commands
 						case "movehere": movehere(client, targetMob, args); break;
 						case "location": location(client, targetMob, args); break;
 						case "remove": remove(client, targetMob, args); break;
+					case "transparent": // deprecated, use "ghost"
 						case "ghost": ghost(client, targetMob, args); break;
 						case "stealth": stealth(client, targetMob, args); break;
 						case "torch": torch(client, targetMob, args); break;
@@ -209,6 +210,7 @@ namespace DOL.GS.Commands
 						case "notarget": notarget(client, targetMob, args); break;
 						case "kill": kill(client, targetMob, args); break;
 						case "flags": flags(client, targetMob, args); break;
+					case "regen":  // deprecated, use "heal"
 						case "heal": heal(client, targetMob, args); break;
 						case "attack": attack(client, targetMob, args); break;
 						case "info": info(client, targetMob, args); break;
@@ -293,8 +295,10 @@ namespace DOL.GS.Commands
 
 			//Create a new mob
 			GameNPC mob = null;
+			ArrayList asms = new ArrayList(ScriptMgr.Scripts);
+			asms.Add(typeof(GameServer).Assembly);
 
-			foreach (Assembly script in ScriptMgr.GameServerScripts)
+			foreach (Assembly script in asms)
 			{
 				try
 				{
@@ -926,7 +930,7 @@ namespace DOL.GS.Commands
 			{
 				string raceName = string.Join(" ", args, 2, args.Length - 2);
 
-				Race npcRace = GameServer.Database.SelectObjects<Race>("`Name` = @Name", new QueryParameter("@Name", raceName)).FirstOrDefault();
+				Race npcRace = GameServer.Database.SelectObject<Race>("`Name` = '" + GameServer.Database.Escape(raceName) + "'") as Race;
 
 				if (npcRace == null)
 				{
@@ -1049,17 +1053,19 @@ namespace DOL.GS.Commands
 
 			if (args.Length > 2 && args[2] == "true")
 			{
-				var mobs = GameServer.Database.SelectObjects<Mob>("`Name` = @Name", new QueryParameter("@Name", mobName)).FirstOrDefault();
+				var mobs = GameServer.Database.SelectObject<Mob>("Name = '" + mobName + "'");
 
 				if (mobs == null)
 				{
-					var deleteLoots = GameServer.Database.SelectObjects<MobXLootTemplate>("`MobName` = @MobName", new QueryParameter("@MobName", mobName));
+					var deleteLoots = GameServer.Database.SelectObjects<MobXLootTemplate>("MobName = '" + mobName + "'");
 
-					GameServer.Database.DeleteObject(deleteLoots);
+					foreach (var o in deleteLoots)
+						GameServer.Database.DeleteObject(o);
 
-					var deleteLootTempl = GameServer.Database.SelectObjects<LootTemplate>("`TemplateName` = @TemplateName", new QueryParameter("@TemplateName", mobName));
-					
-					GameServer.Database.DeleteObject(deleteLootTempl);
+					var deleteLootTempl = GameServer.Database.SelectObjects<LootTemplate>("TemplateName = '" + mobName + "'");
+
+					foreach (var o in deleteLootTempl)
+						GameServer.Database.DeleteObject(o);
 
 					DisplayMessage(client, "Removed MobXLootTemplate and LootTemplate entries for " + mobName + " from DB.");
 				}
@@ -1511,55 +1517,39 @@ namespace DOL.GS.Commands
 		{
 			try
 			{
-				ABrain brains = null;
+				ABrain brain = null;
 				string brainType = args[2];
 
 				try
 				{
 					client.Out.SendDebugMessage(Assembly.GetAssembly(typeof(GameServer)).FullName);
-					brains = (ABrain)Assembly.GetAssembly(typeof(GameServer)).CreateInstance(brainType, false);
+					brain = (ABrain)Assembly.GetAssembly(typeof(GameServer)).CreateInstance(brainType, false);
 				}
 				catch (Exception e)
 				{
 					client.Out.SendMessage(e.ToString(), eChatType.CT_System, eChatLoc.CL_PopupWindow);
 				}
 
-				if (brains == null)
+				if (brain == null)
 				{
 					try
 					{
 						client.Out.SendDebugMessage(Assembly.GetExecutingAssembly().FullName);
-						brains = (ABrain)Assembly.GetExecutingAssembly().CreateInstance(brainType, false);
+						brain = (ABrain)Assembly.GetExecutingAssembly().CreateInstance(brainType, false);
 					}
 					catch (Exception e)
 					{
 						client.Out.SendMessage(e.ToString(), eChatType.CT_System, eChatLoc.CL_PopupWindow);
 					}
 				}
-				if (brains == null)
+
+				if (brain == null)
 				{
-					foreach (Assembly script in ScriptMgr.GameServerScripts)
-					{
-						try
-						{							
-							client.Out.SendDebugMessage(script.FullName);
-							brains = (ABrain)script.CreateInstance(brainType, false);
-							
-							if (brains != null) break;
-						}
-						catch (Exception e)
-						{
-							client.Out.SendMessage(e.ToString(), eChatType.CT_System, eChatLoc.CL_PopupWindow);
-						}
-					}
-				}
-				if (brains == null)
-				{
-					client.Out.SendMessage("Could not find brain " + brainType + ". Check spelling and script namespace (case sensitive)", eChatType.CT_System, eChatLoc.CL_SystemWindow);
+					client.Out.SendMessage("There was an error creating an instance of " + brainType + "!", eChatType.CT_System, eChatLoc.CL_SystemWindow);
 				}
 				else
 				{
-					targetMob.SetOwnBrain(brains);
+					targetMob.SetOwnBrain(brain);
 					targetMob.SaveIntoDatabase();
 					client.Out.SendMessage(targetMob.Name + "'s brain set to " + targetMob.Brain.ToString(), eChatType.CT_System, eChatLoc.CL_SystemWindow);
 				}
@@ -1850,13 +1840,14 @@ namespace DOL.GS.Commands
 						{
 							bool replace = (args.Length > 4 && args[4].ToLower() == "replace");
 
-							var existingTemplates = GameServer.Database.SelectObjects<NPCEquipment>("`TemplateID` = @TemplateID", new QueryParameter("@TemplateID", args[3]));
+							var existingTemplates = GameServer.Database.SelectObjects<NPCEquipment>("TemplateID = '" + GameServer.Database.Escape(args[3]) + "'");
 
 							if (existingTemplates.Count > 0)
 							{
 								if (replace)
 								{
-									GameServer.Database.DeleteObject(existingTemplates);
+									foreach (var templateToDelete in existingTemplates)
+										GameServer.Database.DeleteObject(templateToDelete);
 								}
 								else
 								{
@@ -1937,7 +1928,8 @@ namespace DOL.GS.Commands
 		private void dropcount<T>(GameClient client, GameNPC targetMob, string[] args) where T : MobXLootTemplate
 		{
 			T mxlt =
-				GameServer.Database.SelectObjects<T>("`MobName` = @MobName AND `LootTemplateName` = @LootTemplateName", new [] { new QueryParameter("@MobName", targetMob.Name), new QueryParameter("@LootTemplateName", targetMob.Name) }).FirstOrDefault();
+				GameServer.Database.SelectObject<T>("MobName = '" + GameServer.Database.Escape(targetMob.Name) +
+				                                    "' AND LootTemplateName = '" + GameServer.Database.Escape(targetMob.Name) + "'");
 
 			if (args.Length < 3)
 			{
@@ -1998,10 +1990,14 @@ namespace DOL.GS.Commands
 				}
 
 				var template =
-					GameServer.Database.SelectObjects<LootTemplateType>("`TemplateName` = @TemplateName AND `ItemTemplateID` = @ItemTemplateID", new[] { new QueryParameter("@TemplateName", name), new QueryParameter("@ItemTemplateID", lootTemplateID) });
+					GameServer.Database.SelectObjects<LootTemplateType>("TemplateName = '" + GameServer.Database.Escape(name) +
+					                                                    "' AND ItemTemplateID = '" + GameServer.Database.Escape(lootTemplateID) + "'");
 				if (template != null)
 				{
-					GameServer.Database.DeleteObject(template);
+					foreach (var loot in template)
+					{
+						GameServer.Database.DeleteObject(loot);
+					}
 
 					LootTemplateType lt = Activator.CreateInstance<LootTemplateType>();
 					lt.Chance = chance;
@@ -2043,8 +2039,8 @@ namespace DOL.GS.Commands
 				}
 
 				MobXLootType mxlt =
-					GameServer.Database.SelectObjects<MobXLootType>("`MobName` = @MobName AND `LootTemplateName` = @LootTemplateName", new [] { new QueryParameter("@MobName", targetMob.Name), new QueryParameter("@LootTemplateName", name) }).FirstOrDefault();
-
+					GameServer.Database.SelectObject<MobXLootType>("MobName = '" + GameServer.Database.Escape(targetMob.Name) +
+					                                               "' AND LootTemplateName = '" + GameServer.Database.Escape(name) + "'");
 				if (mxlt == null)
 				{
 					DisplayMessage(client,
@@ -2078,7 +2074,7 @@ namespace DOL.GS.Commands
 					return;
 				}
 
-				LootOTD otd = GameServer.Database.SelectObjects<LootOTD>("`MobName` = @MobName AND `ItemTemplateID` = @ItemTemplateID", new [] { new QueryParameter("@MobName", mobName), new QueryParameter("@ItemTemplateID", itemTemplateID) }).FirstOrDefault();
+				LootOTD otd = GameServer.Database.SelectObject<LootOTD>("MobName = '" + GameServer.Database.Escape(mobName) + "' AND ItemTemplateID = '" + GameServer.Database.Escape(itemTemplateID) + "'");
 
 				if (otd != null)
 				{
@@ -2137,7 +2133,7 @@ namespace DOL.GS.Commands
 				var text = new List<string>();
 				text.Add("");
 
-				IList<LootOTD> otds = GameServer.Database.SelectObjects<LootOTD>("`MobName` = @MobName", new QueryParameter("@MobName", targetMob.Name));
+				IList<LootOTD> otds = GameServer.Database.SelectObjects<LootOTD>("MobName = '" + GameServer.Database.Escape(targetMob.Name) + "'");
 
 				if (otds != null && otds.Count > 0)
 				{
@@ -2188,14 +2184,14 @@ namespace DOL.GS.Commands
 			if (mob.NPCTemplate != null)
 			{
 				fromNPCT = true;
-				mobXloot = GameServer.Database.SelectObjects<MobDropTemplateType>("`MobName` = @MobName", new QueryParameter("@MobName", mob.NPCTemplate.TemplateId));
+				mobXloot = GameServer.Database.SelectObjects<MobDropTemplateType>("MobName = '" + GameServer.Database.Escape(mob.NPCTemplate.TemplateId.ToString()) + "'");
 			}
-			if (mobXloot==null || (mobXloot!=null && mobXloot.Count()==0)) mobXloot = GameServer.Database.SelectObjects<MobDropTemplateType>("`MobName` = @MobName", new QueryParameter("@MobName", mobName));
+			if (mobXloot==null || (mobXloot!=null && mobXloot.Count()==0)) mobXloot = GameServer.Database.SelectObjects<MobDropTemplateType>("MobName = '" + GameServer.Database.Escape(mobName) + "'");
 			
 			foreach (var mobXtemplate in mobXloot)
 			{
 				didDefault = didDefault || mobXtemplate.LootTemplateName == mobName;
-				var template = GameServer.Database.SelectObjects<LootTemplateType>("`TemplateName` = @TemplateName", new QueryParameter("@TemplateName", mobXtemplate.LootTemplateName));
+				var template = GameServer.Database.SelectObjects<LootTemplateType>("TemplateName = '" + GameServer.Database.Escape(mobXtemplate.LootTemplateName) + "'");
 				if (template.Count > 0)
 					text.Add("+ Mob's template [from " + (fromNPCT?mob.NPCTemplate.TemplateId.ToString():mobName) + "]: "+ mobXtemplate.LootTemplateName + " (DropCount: " + mobXtemplate.DropCount + ")");
 				text.AddRange(
@@ -2207,7 +2203,7 @@ namespace DOL.GS.Commands
 			}
 			if (!didDefault)
 			{
-				var template = GameServer.Database.SelectObjects<LootTemplateType>("`TemplateName` = @TemplateName", new QueryParameter("@TemplateName", mobName));
+				var template = GameServer.Database.SelectObjects<LootTemplateType>("TemplateName = '" + GameServer.Database.Escape(mobName) + "'");
 				if (template.Count > 0)
 					text.Add("+ Default: ");
 				text.AddRange(
@@ -2227,7 +2223,7 @@ namespace DOL.GS.Commands
 
 			if (lootTemplateID.ToLower() == "all items")
 			{
-				var template = GameServer.Database.SelectObjects<LootTemplateType>("`TemplateName` = @TemplateName", new QueryParameter("@TemplateName", name));
+				var template = GameServer.Database.SelectObjects<LootTemplateType>("TemplateName = '" + GameServer.Database.Escape(name) + "'");
 
 				if (template != null && template.Count > 0)
 				{
@@ -2249,12 +2245,14 @@ namespace DOL.GS.Commands
 			}
 			else
 			{
-				IList<LootTemplateType> template = GameServer.Database.SelectObjects<LootTemplateType>("`TemplateName` = @TemplateName AND `ItemTemplateID` = @ItemTemplateID", new [] { new QueryParameter("@TemplateName", name), new QueryParameter("@ItemTemplateID", lootTemplateID) });
+				IList<LootTemplateType> template = GameServer.Database.SelectObjects<LootTemplateType>("TemplateName = '" + GameServer.Database.Escape(name) + "' AND ItemTemplateID = '" + GameServer.Database.Escape(lootTemplateID) + "'");
 
 				if (template != null && template.Count > 0)
 				{
-
-					GameServer.Database.DeleteObject(template);
+					foreach (LootTemplateType loot in template)
+					{
+						GameServer.Database.DeleteObject(loot);
+					}
 
 					refreshloot(client, targetMob, null);
 					client.Out.SendMessage(lootTemplateID + " removed from " + targetMob.Name, eChatType.CT_System, eChatLoc.CL_SystemWindow);
@@ -2271,11 +2269,14 @@ namespace DOL.GS.Commands
 			string itemTemplateID = args[2];
 			string name = targetMob.Name;
 
-			IList<LootOTD> template = GameServer.Database.SelectObjects<LootOTD>("`MobName` = @MobName AND `ItemTemplateID` = @ItemTemplateID", new[] { new QueryParameter("@MobName", name), new QueryParameter("@ItemTemplateID", itemTemplateID) });
+			IList<LootOTD> template = GameServer.Database.SelectObjects<LootOTD>("MobName = '" + GameServer.Database.Escape(name) + "' AND ItemTemplateID = '" + GameServer.Database.Escape(itemTemplateID) + "'");
 
 			if (template != null)
 			{
-				GameServer.Database.DeleteObject(template);
+				foreach (LootOTD loot in template)
+				{
+					GameServer.Database.DeleteObject(loot);
+				}
 
 				refreshloot(client, targetMob, null);
 
@@ -2440,8 +2441,9 @@ namespace DOL.GS.Commands
 			if (args.Length > 2)
 			{
 				string mobName = string.Join(" ", args, 2, args.Length - 2);
+				mobName = mobName.Replace("'", "''");
 
-				Mob dbMob = GameServer.Database.SelectObjects<Mob>("`Name` = @Name", new QueryParameter("@Name", mobName)).FirstOrDefault();
+				Mob dbMob = GameServer.Database.SelectObject<Mob>("Name = '" + mobName + "'");
 
 				if (dbMob != null)
 				{
@@ -2452,7 +2454,10 @@ namespace DOL.GS.Commands
 					}
 					else
 					{
-						foreach (Assembly script in ScriptMgr.GameServerScripts)
+						ArrayList asms = new ArrayList(ScriptMgr.Scripts);
+						asms.Add(typeof(GameServer).Assembly);
+
+						foreach (Assembly script in asms)
 						{
 							try
 							{
@@ -2989,7 +2994,7 @@ namespace DOL.GS.Commands
 		{
 			if (args.Length > 2)
 			{
-				Mob mob = GameServer.Database.FindObjectByKey<Mob>(args[2]);
+				Mob mob = GameServer.Database.SelectObject<Mob>("Mob_ID = '" + GameServer.Database.Escape(args[2]) + "'");
 				if (mob != null)
 				{
 					Log.DebugFormat("Mob_ID {0} loaded from database.", args[2]);
@@ -3024,11 +3029,11 @@ namespace DOL.GS.Commands
 				maxreturn = 10;
 			}
 
-			var mobs = GameServer.Database.SelectObjects<Mob>("`Name` LIKE @Name", new QueryParameter("@Name", string.Format("%{0}%", args[2]))).OrderByDescending(m => m.Level).Take(maxreturn).ToArray();
-			if (mobs != null && mobs.Length > 0)
+			var mobs = GameServer.Database.SelectObjects<Mob>("name like '%" + GameServer.Database.Escape(args[2]) + "%' order by level desc limit " + maxreturn.ToString());
+			if (mobs != null && mobs.Count > 0)
 			{
 				string mnames = "Found : \n";
-				for (int i = 0; i < mobs.Length; i++)
+				for (int i = 0; i < mobs.Count; i++)
 				{
 					mnames = mnames + mobs[i].Name + "\n";
 				}
@@ -3218,7 +3223,7 @@ namespace DOL.GS.Commands
 
 		private void trigger_info(GameClient client, GameNPC targetMob)
 		{
-			var triggers = GameServer.Instance.NpcManager.AmbientBehaviour[targetMob.Name];
+			var triggers = GameServer.Database.SelectObjects<MobXAmbientBehaviour>("`Source` = '" + GameServer.Database.Escape(targetMob.Name) + "'");
 			client.Player.TempProperties.setProperty("mob_triggers", triggers);
 			ChatUtil.SendSystemMessage(client, targetMob.Name + "'s triggers:");
 			var i = 0;

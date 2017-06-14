@@ -940,7 +940,7 @@ namespace DOL.GS
 
 			if (spell.InstrumentRequirement != 0 ||
 			    line.KeyName == GlobalSpellsLines.Item_Spells ||
-			    line.KeyName.StartsWith(GlobalSpellsLines.Champion_Lines_StartWith))
+			    line.KeyName.StartsWith(GlobalSpellsLines.Champion_Spells))
 			{
 				return ticks;
 			}
@@ -2927,37 +2927,15 @@ namespace DOL.GS
 
 			int procChance = (int)Math.Ceiling(((weapon.ProcChance > 0 ? weapon.ProcChance : 10) * (weapon.SPD_ABS / 35.0)));
 
-            //Error protection and log for Item Proc's
-            Spell procSpell = null;
-            Spell procSpell1 = null;
-            if (this is GamePlayer)
-            {
-                SpellLine line = SkillBase.GetSpellLine(GlobalSpellsLines.Item_Effects);
-                if (line != null)
-                {
-                    procSpell = SkillBase.FindSpell(weapon.ProcSpellID, line);
-                    procSpell1 = SkillBase.FindSpell(weapon.ProcSpellID1, line);
+			// Proc #1
 
-                    if (procSpell == null && weapon.ProcSpellID != 0)
-                    {
-                        log.ErrorFormat("- Proc ID {0} Not Found on item: {1} ", weapon.ProcSpellID, weapon.Template.Id_nb);
-                    }
-                    if (procSpell1 == null && weapon.ProcSpellID1 != 0)
-                    {
-                        log.ErrorFormat("- Proc1 ID {0} Not Found on item: {1} ", weapon.ProcSpellID1, weapon.Template.Id_nb);
-                    }
-                }
-            }
+			if (weapon.ProcSpellID != 0 && Util.Chance(procChance))
+				StartWeaponMagicalEffect(weapon, ad, SkillBase.GetSpellLine(GlobalSpellsLines.Item_Effects), weapon.ProcSpellID, false);
 
-            // Proc #1
-            if (procSpell != null && Util.Chance(procChance))
+			// Proc #2
 
-                StartWeaponMagicalEffect(weapon, ad, SkillBase.GetSpellLine(GlobalSpellsLines.Item_Effects), weapon.ProcSpellID, false);
-
-            // Proc #2
-            if (procSpell1 != null && Util.Chance(procChance))
-
-                StartWeaponMagicalEffect(weapon, ad, SkillBase.GetSpellLine(GlobalSpellsLines.Item_Effects), weapon.ProcSpellID1, false);
+			if (weapon.ProcSpellID1 != 0 && Util.Chance(procChance))
+				StartWeaponMagicalEffect(weapon, ad, SkillBase.GetSpellLine(GlobalSpellsLines.Item_Effects), weapon.ProcSpellID1, false);
 
 			// Poison
 
@@ -6721,7 +6699,10 @@ namespace DOL.GS
 		{
 			try
 			{
-				foreach (Assembly asm in ScriptMgr.GameServerScripts)
+				ArrayList asms = new ArrayList();
+				asms.Add(typeof(GameServer).Assembly);
+				asms.AddRange(ScriptMgr.Scripts);
+				foreach (Assembly asm in asms)
 				{
 					foreach (Type t in asm.GetTypes())
 					{

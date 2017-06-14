@@ -16,7 +16,7 @@ namespace DOL.Database
 		string m_killedRealm;
 		int m_rpReward;
 		byte m_sameIP = 0;
-		string m_regionName = string.Empty;
+		string m_regionName = "";
 		bool m_isInstance = false;
 
 		public PvPKillsLog()

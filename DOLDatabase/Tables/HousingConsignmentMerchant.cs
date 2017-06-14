@@ -35,7 +35,7 @@ namespace DOL.Database
 
         public HouseConsignmentMerchant()
         {
-			m_ownerID = string.Empty;
+			m_ownerID = "";
 			m_houseNumber = 0;
 			m_money = 0;
         }

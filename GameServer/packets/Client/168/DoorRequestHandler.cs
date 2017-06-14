@@ -16,9 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-using System.Linq;
 using System.Collections.Generic;
-
 using DOL.Database;
 using DOL.GS.Keeps;
 using DOL.GS.ServerProperties;
@@ -108,7 +106,7 @@ namespace DOL.GS.PacketHandler.Client.v168
 				return;
 			}
 
-			var door = GameServer.Database.SelectObjects<DBDoor>("`InternalID` = @InternalID", new QueryParameter("@InternalID", doorID)).FirstOrDefault();
+			var door = GameServer.Database.SelectObject<DBDoor>("InternalID = '" + doorID + "'");
 
 			if (door != null)
 			{

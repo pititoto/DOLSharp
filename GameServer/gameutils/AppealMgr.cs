@@ -20,14 +20,11 @@ using System;
 using System.Threading;
 using System.Reflection;
 using System.Collections.Generic;
-using System.Linq;
-
+using System.Collections;
 using log4net;
-
 using DOL.GS.PacketHandler;
 using DOL.Language;
 using DOL.Events;
-using DOL.Database;
 
 namespace DOL.GS.Appeal
 {
@@ -178,13 +175,13 @@ namespace DOL.GS.Appeal
 
 		public static DBAppeal GetAppealByPlayerName(string name)
 		{
-			DBAppeal appeal = GameServer.Database.SelectObjects<DBAppeal>("`Name` = @Name", new QueryParameter("@Name", name)).FirstOrDefault();
+			DBAppeal appeal = GameServer.Database.SelectObject<DBAppeal>("`Name` = '" + GameServer.Database.Escape(name) + "'");
 			return appeal;
 		}
 
 		public static DBAppeal GetAppealByAccountName(string name)
 		{
-			DBAppeal appeal = GameServer.Database.SelectObjects<DBAppeal>("`Account` = @Account", new QueryParameter("@Account", name)).FirstOrDefault();
+			DBAppeal appeal = GameServer.Database.SelectObject<DBAppeal>("`Account` = '" + GameServer.Database.Escape(name) + "'");
 			return appeal;
 		}
 

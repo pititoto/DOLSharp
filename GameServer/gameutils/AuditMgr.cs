@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Timers;
 using DOL.Database;
-using DOL.Database.Attributes;
 
 namespace DOL.GS
 {
@@ -144,7 +143,7 @@ namespace DOL.GS
 			queryBuilder.Append("INSERT INTO ");
 
 			// get proper table name
-			string tableName = AttributesUtils.GetTableOrViewName(typeof (AuditEntry));
+			string tableName = ObjectDatabase.GetTableOrViewName(typeof (AuditEntry));
 
 			if (string.IsNullOrEmpty(tableName))
 			{

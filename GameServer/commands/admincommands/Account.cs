@@ -17,8 +17,8 @@
  *
  */
 using System;
-using System.Linq;
 using DOL.Database;
+using DOL.GS.PacketHandler;
 using DOL.GS.PacketHandler.Client.v168;
 using DOL.Language;
 
@@ -307,7 +307,7 @@ namespace DOL.GS.Commands
 							return;
 						}
 
-						var banacc = GameServer.Database.SelectObjects<DBBannedAccount>("(`Type` = @TypeA OR `Type` = @TypeB) AND `Account` = @Account", new[] { new QueryParameter("@TypeA", "A"), new QueryParameter("@TypeB", "B"), new QueryParameter("@Account", accountname) });
+                        var banacc = GameServer.Database.SelectObjects<DBBannedAccount>("((Type='A' OR Type='B') AND Account ='" + GameServer.Database.Escape(accountname) + "')");
 						if (banacc.Count == 0)
 						{
 							DisplayMessage(client, LanguageMgr.GetTranslation(client.Account.Language, "AdminCommands.Account.AccountNotFound", accountname));
@@ -316,7 +316,8 @@ namespace DOL.GS.Commands
 						
 						try
                         {
-                            GameServer.Database.DeleteObject(banacc);
+                            foreach(DBBannedAccount banned in banacc)
+                                GameServer.Database.DeleteObject(banned);
                         }
                         catch(Exception) { DisplaySyntax(client); return; }
 						DisplayMessage(client, "Account "+accountname+" unbanned!");
@@ -360,7 +361,7 @@ namespace DOL.GS.Commands
 			GameClient client = WorldMgr.GetClientByAccountName(name, true);
 			if (client != null)
 				return client.Account;
-			return GameServer.Database.FindObjectByKey<Account>(name);
+			return GameServer.Database.SelectObject<Account>("Name ='" + GameServer.Database.Escape(name) + "'");
 		}
 
 		/// <summary>
@@ -373,7 +374,7 @@ namespace DOL.GS.Commands
 			GameClient client = WorldMgr.GetClientByPlayerName(charname, true, false);
 			if (client != null)
 				return client.Player.DBCharacter;
-			return GameServer.Database.SelectObjects<DOLCharacters>("`Name` = @Name", new QueryParameter("@Name", charname)).FirstOrDefault();
+			return GameServer.Database.SelectObject<DOLCharacters>("Name='" + GameServer.Database.Escape(charname) + "'");
 		}
 
 		/// <summary>
@@ -415,7 +416,7 @@ namespace DOL.GS.Commands
 			if (client != null)
 				return client.Account.Name;
 
-			DOLCharacters ch = GameServer.Database.SelectObjects<DOLCharacters>("`Name` = @Name", new QueryParameter("@Name", charname)).FirstOrDefault();
+			DOLCharacters ch = GameServer.Database.SelectObject<DOLCharacters>("Name='" + GameServer.Database.Escape(charname) + "'");
 			if (ch != null)
 				return ch.AccountName;
 			else

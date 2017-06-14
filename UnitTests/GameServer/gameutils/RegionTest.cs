@@ -22,12 +22,13 @@ using System.Net.Sockets;
 using DOL.Database;
 using DOL.Events;
 using DOL.GS;
+using DOL.Tests;
 using NUnit.Framework;
 
-namespace DOL.Server.Tests
+namespace DOL.Server
 {
 	/// <summary>
-	/// Unit test for the Region Class
+	/// Unittest for the Region Class
 	/// </summary>
 	[TestFixture]
 	public class RegionTest : ServerTests
@@ -36,10 +37,11 @@ namespace DOL.Server.Tests
 
 		public RegionTest()
 		{
-		}		
+		}
 
-		[Test, Explicit]
-		public void AddObject()
+		
+
+		[Test] public void AddObject()
 		{
 			Region region = WorldMgr.GetRegion(1);
 			GameObject obj = new GameNPC();
@@ -58,8 +60,7 @@ namespace DOL.Server.Tests
 		}
 
 
-		[Test, Explicit]
-		public void AddArea()
+		[Test] public void AddArea()
 		{
 			Region region = WorldMgr.GetRegion(1);
 			IArea insertArea = region.AddArea(new Area.Circle(null,1000,1000,0,500));
@@ -119,8 +120,7 @@ namespace DOL.Server.Tests
 			notified = true;
 		}
 
-		[Test]
-		public void RemoveObject()
+		[Test] public void RemoveObject()
 		{			
 		}
 	}

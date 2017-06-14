@@ -22,9 +22,7 @@
   */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
-
 using DOL.Database;
 using DOL.GS.PacketHandler;
 using DOL.GS.PacketHandler.Client.v168;
@@ -163,7 +161,7 @@ namespace DOL.GS.Commands
 
 		private void add(GameClient client, GameDoor targetDoor)
 		{
-			var DOOR = GameServer.Database.SelectObjects<DBDoor>("`InternalID` = @InternalID", new QueryParameter("@InternalID", DoorID)).FirstOrDefault();
+			var DOOR = GameServer.Database.SelectObject<DBDoor>("InternalID = '" + DoorID + "'");
 
 			if (DOOR != null)
 			{
@@ -228,7 +226,7 @@ namespace DOL.GS.Commands
 
 		private void delete(GameClient client, GameDoor targetDoor)
 		{
-			var DOOR = GameServer.Database.SelectObjects<DBDoor>("`InternalID` = @InternalID", new QueryParameter("@InternalID", DoorID)).FirstOrDefault();
+			var DOOR = GameServer.Database.SelectObject<DBDoor>("InternalID = '" + DoorID + "'");
 
 			if (DOOR != null)
 			{

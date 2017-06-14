@@ -214,7 +214,7 @@ namespace DOL.GS.Housing
 
 		private static void CheckMerchantItems(string merchantid, string[] itemids)
 		{
-			IList<MerchantItem> merchantitems =	GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID", new QueryParameter("@ItemListID", merchantid));
+			IList<MerchantItem> merchantitems =	GameServer.Database.SelectObjects<MerchantItem>("ItemListID=\'" + GameServer.Database.Escape(merchantid) + "\'");
 
 			int slot = 0;
 			foreach (string itemid in itemids)
@@ -247,7 +247,7 @@ namespace DOL.GS.Housing
 		private static void CheckItemTemplate(string name, string id, int model, int objtype, int copper, int dps, int spd,
 		                                      int bonus, int weight, int realm)
 		{
-			var templateitem = GameServer.Database.FindObjectByKey<ItemTemplate>(id);
+			var templateitem = GameServer.Database.FindObjectByKey<ItemTemplate>(GameServer.Database.Escape(id));
 			if (templateitem == null)
 			{
 				templateitem = new ItemTemplate

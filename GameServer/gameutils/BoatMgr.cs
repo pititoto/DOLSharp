@@ -164,8 +164,11 @@ namespace DOL.GS
                     return false;
                 }
 
-                var boats = GameServer.Database.FindObjectByKey<DBBoat>(boatName);
-                GameServer.Database.DeleteObject(boats);
+                var boats = GameServer.Database.SelectObjects<DBBoat>("BoatName='" + GameServer.Database.Escape(boatName) + "'");
+                foreach (DBBoat boat in boats)
+                {
+                    GameServer.Database.DeleteObject(boat);
+                }
 
                 RemoveBoat(removeBoat);
 

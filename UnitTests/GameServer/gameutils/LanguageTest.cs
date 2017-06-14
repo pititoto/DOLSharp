@@ -17,22 +17,20 @@
  *
  */
 using System;
+using DOL;
 using DOL.GS;
+using DOL.Tests;
 using DOL.Language;
 using NUnit.Framework;
 
-namespace DOL.Server.Tests
+namespace DOL.Server
 {	
-	/// <summary>
-	/// Unit test for the Language Mgr
-	/// </summary>
 	[TestFixture]
 	public class LanguageTest: ServerTests
 	{
 		public LanguageTest()
 		{
 		}
-		
 		[Test]
 		public void TestGetString()
 		{

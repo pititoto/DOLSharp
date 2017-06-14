@@ -52,7 +52,7 @@ namespace DOL.Database
 			m_ypos = 0;
 			m_xpos = 0;
 			m_heading = 0;
-			m_name = string.Empty;
+			m_name = "";
 			m_internalID = 0;
 		}
 

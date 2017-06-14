@@ -34,12 +34,12 @@ namespace DOL.Database
 
 		public ServerProperty()
 		{
-			m_category = string.Empty;
-			m_key = string.Empty;
-			m_description = string.Empty;
+			m_category = "";
+			m_key = "";
+			m_description = "";
 
-			m_defaultValue = string.Empty; ;
-			m_value = string.Empty;
+			m_defaultValue = ""; ;
+			m_value = "";
 		}
 
 		[DataElement(AllowDbNull = false)]
@@ -56,7 +56,7 @@ namespace DOL.Database
 			}
 		}
 
-		[PrimaryKey]
+		[DataElement(AllowDbNull = false)]
 		public string Key
 		{
 			get

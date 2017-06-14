@@ -37,7 +37,7 @@ namespace DOL.Database
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public DBQuest() : this(string.Empty, 1, string.Empty)
+		public DBQuest() : this("",1,"")
 		{
 		}
 

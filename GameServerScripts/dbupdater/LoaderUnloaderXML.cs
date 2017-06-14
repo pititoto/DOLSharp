@@ -47,21 +47,23 @@ namespace DOL.GS.DatabaseUpdate
 		/// </summary>
 		public static IList<Type> GetAllDataTableTypes()
 		{
-			var result = new List<Type>();
+			List<Type> result = new List<Type>();
 			try
 			{
 				// Walk through each assembly in scripts
-				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+				foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
 				{
 					// Walk through each type in the assembly
-					foreach (var type in asm.GetTypes())
+					foreach (Type type in asm.GetTypes())
 					{
-						if (!type.IsClass || type.IsAbstract || !typeof(DataObject).IsAssignableFrom(type))
+						if (type.IsClass != true || !typeof(DataObject).IsAssignableFrom(type))
 							continue;
 						
-						// Don't Keep Views...
-						if (type.GetCustomAttributes<DataTable>(false).Any() && AttributesUtils.GetViewName(type) == null)
+						object[] attrib = type.GetCustomAttributes(typeof(DataTable), false);
+						if (attrib.Length > 0)
+						{
 							result.Add(type);
+						}
 					}
 				}
 			}
@@ -84,16 +86,16 @@ namespace DOL.GS.DatabaseUpdate
 		public static XmlSerializer GetXMLSerializer(Type objectsType, Type t)
 		{
 				// filter XML Attributes
-				var xmlOver = new XmlAttributeOverrides();
-				var xmlIgnore = new XmlAttributes();
+				System.Xml.Serialization.XmlAttributeOverrides xmlOver = new XmlAttributeOverrides();
+				System.Xml.Serialization.XmlAttributes xmlIgnore = new XmlAttributes();
 				xmlIgnore.XmlIgnore = true;
 				
 				// Ignore Fields that are not DataElems
 				foreach (var member in t.GetMembers())
 				{
-					var dataElems = member.GetCustomAttributes<DataElement>(true).ToArray();
-					var primaryKeys = member.GetCustomAttributes<PrimaryKey>(true).ToArray();
-					if(!dataElems.Any() && (!primaryKeys.Any() || primaryKeys.First().AutoIncrement))
+					object[] dataElems = member.GetCustomAttributes(typeof(DataElement), true);
+					object[] primaryKeys = member.GetCustomAttributes(typeof(PrimaryKey), true);
+					if(dataElems.Length < 1 && (primaryKeys.Length < 1 || ((PrimaryKey)primaryKeys[0]).AutoIncrement))
 					{
 						try
 						{
@@ -104,10 +106,9 @@ namespace DOL.GS.DatabaseUpdate
 									xmlOver.Add(t, member.Name, xmlIgnore);
 								
 								// Property have weird behavior when overriden...
-								var memberProperty = member as PropertyInfo;
-								if (memberProperty != null)
+								if (member is PropertyInfo)
 								{
-									var baseType = memberProperty.GetGetMethod().GetBaseDefinition().DeclaringType;
+									Type baseType = ((PropertyInfo)member).GetGetMethod().GetBaseDefinition().DeclaringType;
 									if (baseType != t && baseType != member.DeclaringType)
 										xmlOver.Add(baseType, member.Name, xmlIgnore);
 								}
@@ -134,46 +135,63 @@ namespace DOL.GS.DatabaseUpdate
 			if (t == null || !typeof(DataObject).IsAssignableFrom(t))
 			{
 				if (log.IsInfoEnabled)
-					log.InfoFormat("Null Type or Incompatible Type in UnloadXMLTable Call: {0}", Environment.StackTrace);
+					log.InfoFormat("Null Type or Incompatible Type in UnloadXMLTable Call: {0}", System.Environment.StackTrace);
 			}
 			
 			try
 			{
 				// Get all object "Method" Through Reflection
-				var classMethod = GameServer.Database.GetType().GetMethod("SelectAllObjects", Type.EmptyTypes);
-				var genericMethod = classMethod.MakeGenericMethod(t);
+				MethodInfo classMethod = GameServer.Database.GetType().GetMethod("SelectAllObjects", Type.EmptyTypes);
+				MethodInfo genericMethod = classMethod.MakeGenericMethod(t);
 				
 				// Get Table Name
-				var attrib = t.GetCustomAttributes<DataTable>(false);
-				if (attrib.Any())
+				object[] attrib = t.GetCustomAttributes(typeof(DataTable), false);
+				if (attrib.Length > 0)
 				{
-					var tableName = AttributesUtils.GetTableName(t);
+					string tableName = ((DataTable)attrib[0]).TableName;
 					
-					var path = string.Format("{0}{1}{2}.xml", directory, Path.DirectorySeparatorChar, tableName);
+					string path = string.Format("{0}{1}{2}.xml", directory, Path.DirectorySeparatorChar, tableName);
 	       			
 					if (log.IsInfoEnabled)
 						log.InfoFormat("Unloading Table {0} - To file {1}", tableName, path);
 					
-					var objects = (IEnumerable)genericMethod.Invoke(GameServer.Database, new object[]{});
+					IEnumerable objects = (IEnumerable)genericMethod.Invoke(GameServer.Database, new object[]{});
 					
 					try
 					{
 						// Try Sorting them !
-						var remarkables = DatabaseUtils.GetRemarkableMembers(t, true);
+						IList<MemberInfo> remarkables = GetRemarkableMembers(t, true);
 						
-						if (remarkables.Length > 0)
+						if (remarkables.Count > 0)
 						{
-							var firstOrder = objects.Cast<DataObject>().OrderBy(o => remarkables.First().GetValue(o));
+							IOrderedEnumerable<object> firstOrder = objects.Cast<object>().OrderBy(o =>
+							                                                                       {
+							                                                                       	if (remarkables.First() is PropertyInfo)
+							                                                            				return ((PropertyInfo)remarkables.First()).GetValue(o, null);
+							                                                            			else if (remarkables.First() is FieldInfo)
+							                                                            				return ((FieldInfo)remarkables.First()).GetValue(o);
+							                                                            	
+							                                                            			return null;
+							                                                                       });
 							foreach (var remarkable in remarkables.Skip(1))
 							{
-								var followingOrder = firstOrder.ThenBy(o => remarkable.GetValue(o));
+								IOrderedEnumerable<object> followingOrder = firstOrder.ThenBy(o =>
+								                                                              {
+								                                                            	if (remarkable is PropertyInfo)
+								                                                            		return ((PropertyInfo)remarkable).GetValue(o, null);
+								                                                            	else if (remarkable is FieldInfo)
+								                                                            		return ((FieldInfo)remarkable).GetValue(o);
+								                                                            	
+								                                                            	return null;
+								                                                              });
+								
 								firstOrder = followingOrder;
 							}
 							
 							// Dynamic cast
-							var castMethods = typeof(Enumerable).GetMethod("Cast");
+							var castMethods = typeof(System.Linq.Enumerable).GetMethod("Cast");
 							var castGeneric = castMethods.MakeGenericMethod(t);
-							var toArrayMethod = typeof(Enumerable).GetMethod("ToArray");
+							var toArrayMethod = typeof(System.Linq.Enumerable).GetMethod("ToArray");
 							var toArrayGeneric = toArrayMethod.MakeGenericMethod(t);
 							
 							objects = (IEnumerable)toArrayGeneric.Invoke(null, new object[] {castGeneric.Invoke(null , new object[]{firstOrder})});
@@ -189,8 +207,8 @@ namespace DOL.GS.DatabaseUpdate
 						File.Delete(path);
 					
 					// Write XML DataTable
-					var serializer = GetXMLSerializer(t.MakeArrayType(), t);
-					using (var writer = new StreamWriter(path))
+					XmlSerializer serializer = GetXMLSerializer(t.MakeArrayType(), t);
+					using (StreamWriter writer = new StreamWriter(path))
 					{
 						serializer.Serialize(writer, objects);
 					}
@@ -214,15 +232,15 @@ namespace DOL.GS.DatabaseUpdate
 			if (!xml.Exists)
 				return new DataObject[0];
 			
-			var types = GetAllDataTableTypes();
+			IList<Type> types = GetAllDataTableTypes();
 			
 			Type loadingType = null;
 			try
 			{
 				// Read Root of XML File
-				var xmldoc = new XmlDocument();
+				XmlDocument xmldoc = new XmlDocument();
 				xmldoc.Load(xml.OpenRead());
-				loadingType = types.First(t => t.Name.Equals(xmldoc.DocumentElement.Name.Replace("ArrayOf", "")));
+				loadingType = types.Where(t => t.Name.Equals(xmldoc.DocumentElement.Name.Replace("ArrayOf", ""))).First();
 			}
 			catch (Exception e)
 			{
@@ -232,15 +250,88 @@ namespace DOL.GS.DatabaseUpdate
 				return new DataObject[0];
 			}
 			
-			var serializer = GetXMLSerializer(loadingType.MakeArrayType(), loadingType);
+			XmlSerializer serializer = GetXMLSerializer(loadingType.MakeArrayType(), loadingType);
 			
-			using (var stream = xml.OpenRead())
+			using (FileStream stream = xml.OpenRead())
 			{
-				using (var reader = new StreamReader(stream))
+				using (StreamReader reader = new StreamReader(stream))
 				{
 					return (DataObject[])serializer.Deserialize(reader);
 				}
 			}
+		}
+		
+		/// <summary>
+		/// List all Unique Members of a DataTable, Using them for duplicate Matching.
+		/// </summary>
+		/// <param name="xmlType">DataObject Type</param>
+		/// <param name="primaryKey">Primary Key Reference if Available</param>
+		/// <returns>List of MemberInfo having Unique Attributes</returns>
+		public static IList<MemberInfo> GetUniqueMembers(Type xmlType, out MemberInfo primaryKey)
+		{
+			// Find unique Fields
+			List<MemberInfo> uniqueMember = new List<MemberInfo>();
+			primaryKey = null;
+			foreach(MemberInfo member in xmlType.GetMembers())
+			{
+				object[] attrs = member.GetCustomAttributes(typeof(DataElement), true);
+				if (attrs.Length > 0)
+				{
+					if (((DataElement)attrs[0]).Unique)
+						uniqueMember.Add(member);
+				}
+				
+				attrs = member.GetCustomAttributes(typeof(PrimaryKey), true);
+				if (attrs.Length > 0)
+				{
+					if (!((PrimaryKey)attrs[0]).AutoIncrement)
+						uniqueMember.Add(member);
+					primaryKey = member;
+				}
+			}
+
+			return uniqueMember;
+		}
+		
+		/// <summary>
+		/// List Remarkable Members of a DataTable, Using them for Default Ordering
+		/// This includes non-generated Primary Key, Unique Field, and Indexed Fields (optionnaly)
+		/// </summary>
+		/// <param name="xmlType">DataObject Type</param>
+		/// <param name="forceIndexes">Returns Indexes even if enough Unique type have been gathered</param>
+		/// <returns>List of Remkarkable MemberInfo of given DataObject</returns>
+		public static IList<MemberInfo> GetRemarkableMembers(Type xmlType, bool forceIndexes)
+		{
+			// Find unique Fields
+			MemberInfo dummy;
+			IList<MemberInfo> remarkableMember = GetUniqueMembers(xmlType, out dummy);
+			
+			// We don't have enough fields, Try indexes !
+			if (remarkableMember.Count < 1 || forceIndexes)
+			{
+				foreach(MemberInfo member in xmlType.GetMembers())
+				{
+					object[] attrs = member.GetCustomAttributes(typeof(DataElement), true);
+					if (attrs.Length > 0)
+					{
+						if (((DataElement)attrs[0]).Index)
+						{
+							remarkableMember.Add(member);
+							
+							// Check if this is a multiple column index
+							string[] columns = ((DataElement)attrs[0]).IndexColumns.Split(',');
+							foreach(string col in columns)
+							{
+								MemberInfo[] index = xmlType.GetMember(col);
+								if (index.Length > 0 && !remarkableMember.Contains(index[0]))
+									remarkableMember.Add(index[0]);
+							}
+						}
+					}
+				}
+			}
+
+			return remarkableMember;
 		}
 	}
 }

@@ -20,12 +20,15 @@ using System;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Reflection;
-using System.Linq;
-
-using log4net;
-
-using DOL.GS.Quests.Atlantis;
+using System.Text;
 using DOL.Database;
+using DOL.Events;
+using DOL.GS.PacketHandler;
+using log4net;
+using DOL.GS.Behaviour.Attributes;
+using DOL.GS.Behaviour;
+using DOL.GS.Quests.Atlantis;
+using System.Collections.Generic;
 
 namespace DOL.GS.Quests
 {
@@ -63,10 +66,13 @@ namespace DOL.GS.Quests
 
         public static bool Init()
         {
+            List<Assembly> assemblies = new List<Assembly>();
+            assemblies.Add(Assembly.GetAssembly(typeof(GameServer)));
+            assemblies.AddRange(ScriptMgr.Scripts);
             //We will search our assemblies for Quests by reflection so
             //it is not neccessary anymore to register new quests with the
             //server, it is done automatically!
-            foreach (Assembly assembly in ScriptMgr.GameServerScripts)
+            foreach (Assembly assembly in assemblies)
             {
                 // Walk through each type in the assembly
                 foreach (Type type in assembly.GetTypes())
@@ -143,7 +149,7 @@ namespace DOL.GS.Quests
 				string tempID = Convert.ToString(identifier);
 
                 // TODO: Dirty Hack this should be done better
-                Mob mob = GameServer.Database.SelectObjects<Mob>("`Mob_ID` = @MobID OR `Name` = @Name", new[] { new QueryParameter("@MobID", tempID), new QueryParameter("@Name", tempID) }).FirstOrDefault();
+				Mob mob = GameServer.Database.SelectObject<Mob>("MobID='" + GameServer.Database.Escape(tempID) + "' OR Name='" + GameServer.Database.Escape(tempID) + "'");
 
                 GameNPC[] livings = WorldMgr.GetNPCsByName(mob.Name,(eRealm) mob.Realm);
 
@@ -206,7 +212,7 @@ namespace DOL.GS.Quests
 			{
 				string tempID = Convert.ToString(identifier);
 
-                Mob mob = GameServer.Database.SelectObjects<Mob>("`Mob_ID` = @MobID OR `Name` = @Name", new[] { new QueryParameter("@MobID", tempID), new QueryParameter("@Name", tempID) }).FirstOrDefault();
+                Mob mob = GameServer.Database.SelectObject<Mob>("MobID='" + GameServer.Database.Escape(tempID) + "' OR Name='" + GameServer.Database.Escape(tempID) + "'");
 
 				GameNPC[] npcs = WorldMgr.GetNPCsByName(mob.Name,(eRealm) mob.Realm);
 

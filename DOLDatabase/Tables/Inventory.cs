@@ -234,15 +234,15 @@ namespace DOL.Database
 		[Relation(LocalField = "ITemplate_Id", RemoteField = "Id_nb", AutoLoad = true, AutoDelete=false)]
 		public ItemTemplate ITWrapper
 		{
-			get { return Template.GetType() == typeof(ItemTemplate) ? Template as ItemTemplate : null; }
-			set { if (value != null) Template = value as ItemTemplate; }
+			get { return Template as ItemTemplate; }
+			set { Template = value as ItemTemplate; }
 		}
 
 		[Relation(LocalField = "UTemplate_Id", RemoteField = "Id_nb", AutoLoad = true, AutoDelete=true)]
 		public ItemUnique IUWrapper
 		{
-			get { return Template.GetType() == typeof(ItemUnique) ? Template as ItemUnique : null; }
-			set { if (value != null) Template = value; }
+			get { return Template as ItemUnique; }
+			set { Template = value; }
 		}
 
 		protected ItemTemplate m_item;
@@ -254,11 +254,11 @@ namespace DOL.Database
 				{
 					if (string.IsNullOrEmpty(OwnerID) == false && m_hasLoggedError == false)
 					{
-						log.ErrorFormat("Template null for player {0} Inventory.  Can't find template {1}{2} for item in slot {3}!", OwnerID, (ITemplate_Id == null ? string.Empty : ITemplate_Id), (UTemplate_Id == null ? string.Empty : UTemplate_Id), m_slot_pos);
+						log.ErrorFormat("Template null for player {0} Inventory.  Can't find template {1}{2} for item in slot {3}!", OwnerID, (ITemplate_Id == null ? "" : ITemplate_Id), (UTemplate_Id == null ? "" : UTemplate_Id), m_slot_pos);
 						m_hasLoggedError = true;
 					}
 
-					return new ItemTemplate() { AllowAdd = false };
+					return new ItemTemplate();
 				}
 
 				return m_item;

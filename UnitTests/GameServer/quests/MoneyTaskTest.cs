@@ -21,12 +21,13 @@ using DOL.Database;
 using DOL.Events;
 using DOL.GS;
 using DOL.GS.Quests;
+using DOL.Tests;
 using NUnit.Framework;
 
-namespace DOL.Server.Tests
+namespace DOL.Server
 {
 	/// <summary>
-	/// Unit Test for Money Task.
+	/// Zusammenfassung für GamePlayerTest.
 	/// </summary>
 	[TestFixture]
 	public class MoneyTaskTest : ServerTests
@@ -35,7 +36,7 @@ namespace DOL.Server.Tests
 		{
 		}
 
-		[Test, Explicit]
+		[Test]
 		public void CreateMoneyTask()
 		{
 			GamePlayer player = CreateMockGamePlayer();

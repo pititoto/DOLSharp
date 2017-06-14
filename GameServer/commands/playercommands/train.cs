@@ -20,8 +20,6 @@
  * Updates: Timx, Daeli
  */
 using System.Text;
-using System.Linq;
-
 using DOL.Database;
 using DOL.GS.Commands;
 using DOL.GS.PacketHandler;
@@ -92,7 +90,7 @@ namespace DOL.GS.Commands
 			string line = string.Join(" ", args, 1, args.Length - 2);
 			line = GameServer.Database.Escape(line);
 
-			var dbSpec = GameServer.Database.SelectObjects<DBSpecialization>("`KeyName` LIKE @KeyName", new QueryParameter("@KeyName", string.Format("{0}%", line))).FirstOrDefault();
+			var dbSpec = GameServer.Database.SelectObject<DBSpecialization>(string.Format("KeyName LIKE '{0}%'", line));
 
 			Specialization spec = null;
 

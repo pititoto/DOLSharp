@@ -68,7 +68,7 @@ namespace DOL.Database
 		/// <summary>
 		/// Template ID
 		/// </summary>
-		[DataElement(AllowDbNull=false, Index = true)]
+		[DataElement(AllowDbNull=false)]
 		public string TemplateID
 		{
 			get

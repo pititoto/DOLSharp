@@ -72,7 +72,7 @@ namespace DOL.GS.ServerRules
 
 			// Ban account
 			IList<DBBannedAccount> objs;
-			objs = GameServer.Database.SelectObjects<DBBannedAccount>("(`Type` = @TypeA OR `Type` = @TypeB) AND `Account` = @Account", new[] { new QueryParameter("@TypeA", "A"), new QueryParameter("@TypeB", "B"), new QueryParameter("@Account", username) });
+			objs = GameServer.Database.SelectObjects<DBBannedAccount>("((Type='A' OR Type='B') AND Account ='" + GameServer.Database.Escape(username) + "')");
 			if (objs.Count > 0)
 			{
                 client.IsConnected = false;
@@ -83,7 +83,7 @@ namespace DOL.GS.ServerRules
 
 			// Ban IP Address or range (example: 5.5.5.%)
 			string accip = GameServer.Database.Escape(client.TcpEndpointAddress);
-			objs = GameServer.Database.SelectObjects<DBBannedAccount>("(`Type` = @TypeI OR `Type` = @TypeB) AND @Ip LIKE `Ip`", new[] { new QueryParameter("@TypeI", "I"), new QueryParameter("@TypeB", "B"), new QueryParameter("@Ip", accip) });
+			objs = GameServer.Database.SelectObjects<DBBannedAccount>("((Type='I' OR Type='B') AND '" + GameServer.Database.Escape(accip) + "' LIKE Ip)");
 			if (objs.Count > 0)
             {
                 client.IsConnected = false;
@@ -147,7 +147,7 @@ namespace DOL.GS.ServerRules
 			}
 			 */
 
-			Account account = GameServer.Database.FindObjectByKey<Account>(username);
+			Account account = GameServer.Database.SelectObject<Account>("Name ='" + GameServer.Database.Escape(username) + "'");
 
 			if (Properties.MAX_PLAYERS > 0)
 			{
@@ -360,15 +360,7 @@ namespace DOL.GS.ServerRules
 			if (defender is GameNPC)
 				if ((((GameNPC)defender).Flags & GameNPC.eFlags.PEACE) != 0)
 					return false;
-			// Players can't attack mobs while they have immunity
-			if (playerAttacker != null && defender != null)
-			{
-				if ((defender is GameNPC) && (playerAttacker.IsInvulnerableToAttack))
-				{
-					if (quiet == false) MessageToLiving(attacker, "You can't attack until your PvP invulnerability timer wears off!");
-						return false;
-				}
-			}
+
 			// Your pet can only attack stealthed players you have selected
 			if (defender.IsStealthed && attacker is GameNPC)
 				if (((attacker as GameNPC).Brain is IControlledBrain) &&

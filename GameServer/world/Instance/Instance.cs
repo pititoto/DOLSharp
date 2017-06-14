@@ -71,7 +71,7 @@ namespace DOL.GS
 		/// <param name="instanceName"></param>
 		public virtual void LoadFromDatabase(string instanceName)
 		{
-			var objects = GameServer.Database.SelectObjects<DBInstanceXElement>("`InstanceID` = @InstanceID", new QueryParameter("@InstanceID", instanceName));
+			var objects = GameServer.Database.SelectObjects<DBInstanceXElement>("`InstanceID` = '" + instanceName + "'");
 
 			if (objects.Count == 0)
 				return;
@@ -104,8 +104,12 @@ namespace DOL.GS
 				}
 
 				//Now we have the classtype to create, create it thus!
+				ArrayList asms = new ArrayList();
+				asms.Add(typeof(GameServer).Assembly);
+				asms.AddRange(ScriptMgr.Scripts);
+
 				//This is required to ensure we check scripts for the space aswell, such as quests!
-				foreach (Assembly asm in ScriptMgr.GameServerScripts)
+				foreach (Assembly asm in asms)
 				{
 					obj = (GameObject)(asm.CreateInstance(theType, false));
 					if (obj != null)

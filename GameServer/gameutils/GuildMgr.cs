@@ -18,7 +18,7 @@
  */
 
 using System;
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Reflection;
@@ -351,17 +351,24 @@ namespace DOL.GS
 				if (removeGuild == null)
 					return false;
 
-				var guilds = GameServer.Database.SelectObjects<DBGuild>("`GuildID` = @GuildID", new QueryParameter("@GuildID", removeGuild.GuildID));
+				var guilds = GameServer.Database.SelectObjects<DBGuild>("GuildName='" + GameServer.Database.Escape(guildName) + "'");
 				foreach (var guild in guilds)
 				{
-					foreach (var cha in GameServer.Database.SelectObjects<DOLCharacters>("`GuildID` = @GuildID", new QueryParameter("@GuildID", guild.GuildID)))
+					foreach (var cha in GameServer.Database.SelectObjects<DOLCharacters>("GuildID = '" + GameServer.Database.Escape(guild.GuildID) + "'"))
+					{
 						cha.GuildID = "";
+					}
+
+					GameServer.Database.DeleteObject(guild);
 				}
-				GameServer.Database.DeleteObject(guilds);
 
 				//[StephenxPimentel] We need to delete the guild specific ranks aswell!
-				var ranks = GameServer.Database.SelectObjects<DBRank>("`GuildID` = @GuildID", new QueryParameter("@GuildID", removeGuild.GuildID));
-				GameServer.Database.DeleteObject(ranks);
+				var ranks = GameServer.Database.SelectObjects<DBRank>("`GuildID` = '" + removeGuild.ID + "'");
+				foreach (var guildRank in ranks)
+				{
+					GameServer.Database.DeleteObject(guildRank);
+				}
+
 
 				lock (removeGuild.GetListOfOnlineMembers())
 				{
@@ -465,12 +472,12 @@ namespace DOL.GS
 					RepairRanks(myguild);
 
 					// now reload the guild to fix the relations
-					myguild = new Guild(GameServer.Database.SelectObjects<DBGuild>("`GuildID` = @GuildID", new QueryParameter("@GuildID", obj.GuildID)).FirstOrDefault());
+					myguild = new Guild(GameServer.Database.SelectObject<DBGuild>("GuildID = '" + obj.GuildID + "'"));
 				}
 
 				AddGuild(myguild);
 
-				var guildCharacters = GameServer.Database.SelectObjects<DOLCharacters>("`GuildID` = @GuildID", new QueryParameter("@GuildID", myguild.GuildID));
+				var guildCharacters = GameServer.Database.SelectObjects<DOLCharacters>(string.Format("GuildID = '" + GameServer.Database.Escape(myguild.GuildID) + "'"));
 				var tempList = new Dictionary<string, GuildMemberDisplay>(guildCharacters.Count);
 
 				foreach (DOLCharacters ch in guildCharacters)
@@ -565,14 +572,14 @@ namespace DOL.GS
 			{
 				player.RemoveMoney(COST_RE_EMBLEM, null);
                 InventoryLogging.LogInventoryAction(player, "(GUILD;" + player.GuildName + ")", eInventoryActionType.Other, COST_RE_EMBLEM);
-                var objs = GameServer.Database.SelectObjects<InventoryItem>("`Emblem` = @Emblem", new QueryParameter("@Emblem", oldemblem));
+				var objs = GameServer.Database.SelectObjects<InventoryItem>("Emblem = " + GameServer.Database.Escape(oldemblem.ToString()));
 				
 				foreach (InventoryItem item in objs)
 				{
 					item.Emblem = newemblem;
+					GameServer.Database.SaveObject(item);
 				}
-				GameServer.Database.SaveObject(objs);
-				
+
 				// change guild house emblem
 
 				if (player.Guild.GuildOwnsHouse && player.Guild.GuildHouseNumber > 0)

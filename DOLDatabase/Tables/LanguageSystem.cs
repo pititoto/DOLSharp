@@ -25,7 +25,7 @@ namespace DOL.Database
     public class DBLanguageSystem : LanguageDataObject
     {
         #region Variables
-        private string m_text = string.Empty;
+        private string m_text = "";
         #endregion Variables
 
         public DBLanguageSystem()

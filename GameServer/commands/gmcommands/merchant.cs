@@ -17,9 +17,8 @@
  *
  */
 using System;
-using System.Linq;
+using System.Collections;
 using System.Reflection;
-
 using DOL.GS;
 using DOL.Database;
 using DOL.GS.PacketHandler;
@@ -78,7 +77,9 @@ namespace DOL.GS.Commands
 
 						//Create a new merchant
 						GameMerchant merchant = null;
-						foreach (Assembly script in ScriptMgr.GameServerScripts)
+						ArrayList asms = new ArrayList(ScriptMgr.Scripts);
+						asms.Add(typeof(GameServer).Assembly);
+						foreach (Assembly script in asms)
 						{
 							try
 							{
@@ -146,7 +147,7 @@ namespace DOL.GS.Commands
 					{
 						string currentID = targetMerchant.TradeItems.ItemsListID;
 
-						var itemList = GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID", new QueryParameter("@ItemListID", currentID));
+						var itemList = GameServer.Database.SelectObjects<MerchantItem>("ItemListID = '" + currentID + "'");
 						foreach (MerchantItem merchantItem in itemList)
 						{
 							MerchantItem item = new MerchantItem();
@@ -267,8 +268,7 @@ namespace DOL.GS.Commands
 												return;
 											}
 
-											MerchantItem item = GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID AND `PageNumber` = @PageNumber AND `SlotPosition` = @SlotPosition",
-											                                                                   new [] { new QueryParameter("@ItemListID", targetMerchant.TradeItems.ItemsListID), new QueryParameter("@PageNumber", page), new QueryParameter("@SlotPosition", slot) } ).FirstOrDefault();
+											MerchantItem item = GameServer.Database.SelectObject<MerchantItem>("ItemListID = '" + GameServer.Database.Escape(targetMerchant.TradeItems.ItemsListID) + "' AND PageNumber = '" + page + "' AND SlotPosition = '" + slot + "'");
 											if (item == null)
 											{
 												item = new MerchantItem();
@@ -327,8 +327,7 @@ namespace DOL.GS.Commands
 												return;
 											}
 
-											MerchantItem item = GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID AND `PageNumber` = @PageNumber AND `SlotPosition` = @SlotPosition",
-											                                                                   new [] { new QueryParameter("@ItemListID", targetMerchant.TradeItems.ItemsListID), new QueryParameter("@PageNumber", page), new QueryParameter("@SlotPosition", slot) } ).FirstOrDefault();
+											MerchantItem item = GameServer.Database.SelectObject<MerchantItem>("ItemListID = '" + GameServer.Database.Escape(targetMerchant.TradeItems.ItemsListID) + "' AND PageNumber = '" + page + "' AND SlotPosition = '" + slot + "'");
 											if (item == null)
 											{
 												DisplayMessage(client, LanguageMgr.GetTranslation(client.Account.Language, "GMCommands.Merchant.Articles.Remove.SlotInPageIsAEmpty", slot, page));
@@ -365,10 +364,13 @@ namespace DOL.GS.Commands
 											}
 											DisplayMessage(client, LanguageMgr.GetTranslation(client.Account.Language, "GMCommands.Merchant.Articles.Delete.DeletingListTemp"));
 
-											var merchantitems = GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID", new QueryParameter("@ItemListID", targetMerchant.TradeItems.ItemsListID));
+											var merchantitems = GameServer.Database.SelectObjects<MerchantItem>("ItemsListID = '" + GameServer.Database.Escape(targetMerchant.TradeItems.ItemsListID) + "'");
 											if (merchantitems.Count > 0)
 											{
-												GameServer.Database.DeleteObject(merchantitems);
+												foreach (MerchantItem item in merchantitems)
+												{
+													GameServer.Database.DeleteObject(item);
+												}
 											}
 											DisplayMessage(client, LanguageMgr.GetTranslation(client.Account.Language, "GMCommands.Merchant.Articles.Delete.ListDeleted"));
 										}
@@ -401,7 +403,9 @@ namespace DOL.GS.Commands
 
 						//Create a new merchant
 						GameMerchant merchant = null;
-						foreach (Assembly script in ScriptMgr.GameServerScripts)
+						ArrayList asms = new ArrayList(ScriptMgr.Scripts);
+						asms.Add(typeof(GameServer).Assembly);
+						foreach (Assembly script in asms)
 						{
 							try
 							{

@@ -42,7 +42,7 @@ namespace DOL.Database
 		/// </summary>
 		public Teleport()
 		{
-			m_type = string.Empty;
+			m_type = "";
 			m_teleportID = "UNDEFINED";
 			m_realm = 0;
 			m_regionID = 0;

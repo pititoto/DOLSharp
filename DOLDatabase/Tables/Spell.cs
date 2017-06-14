@@ -32,9 +32,9 @@ namespace DOL.Database
 		protected int m_icon;
 		protected string m_name;
 		protected string m_description;
-		protected string m_target = string.Empty;
+		protected string m_target = "";
 
-		protected string m_spelltype = string.Empty;
+		protected string m_spelltype = "";
 		protected int m_range = 0;
 		protected int m_radius = 0;
 		protected double m_value = 0;
@@ -52,10 +52,10 @@ namespace DOL.Database
 		protected int m_resmana = 0;
 		protected int m_lifedrain_return = 0;
 		protected int m_amnesia_chance = 0;
-		protected string m_message1 = string.Empty;
-		protected string m_message2 = string.Empty;
-		protected string m_message3 = string.Empty;
-		protected string m_message4 = string.Empty;
+		protected string m_message1 = "";
+		protected string m_message2 = "";
+		protected string m_message3 = "";
+		protected string m_message4 = "";
 		protected int m_instrumentRequirement;
 		protected int m_spellGroup;
 		protected int m_effectGroup;
@@ -642,36 +642,50 @@ namespace DOL.Database
 	/// Spell Custom Values Table containing entries linked to spellID.
 	/// </summary>
 	[DataTable(TableName = "SpellXCustomValues")]
-	public class DBSpellXCustomValues : CustomParam
+	public class DBSpellXCustomValues : DataObject
 	{
+		private int m_spellXCustomValuesID;
+		
+		/// <summary>
+		/// Primary Key Auto Inc
+		/// </summary>
+		[PrimaryKey(AutoIncrement = true)]
+		public int SpellXCustomValuesID {
+			get { return m_spellXCustomValuesID; }
+			set { Dirty = true; m_spellXCustomValuesID = value; }
+		}
+		
 		private int m_spellID;
 		
 		/// <summary>
 		/// Spell Table SpellID Reference
 		/// </summary>
-		[DataElement(AllowDbNull = false, Index = true)]
+		[DataElement(AllowDbNull = false, Index=true)]
 		public int SpellID {
 			get { return m_spellID; }
 			set { Dirty = true; m_spellID = value; }
 		}
 		
-		/// <summary>
-		/// Create new instance of <see cref="DBSpellXCustomValues"/> linked to Spell ID.
-		/// </summary>
-		/// <param name="SpellID">Spell ID</param>
-		/// <param name="KeyName">Key Name</param>
-		/// <param name="Value">Value</param>
-		public DBSpellXCustomValues(int SpellID, string KeyName, string Value)
-			: base(KeyName, Value)
-		{
-			this.SpellID = SpellID;
-		}
+		private string m_keyName;
 		
 		/// <summary>
-		/// Create new instance of <see cref="DBSpellXCustomValues"/>
+		/// KeyName for referencing this value.
 		/// </summary>
-		public DBSpellXCustomValues()
-		{
+		[DataElement(AllowDbNull = false, Varchar=100, Index=true)]
+		public string KeyName {
+			get { return m_keyName; }
+			set { Dirty = true; m_keyName = value; }
+		}
+		
+		private string m_value;
+		
+		/// <summary>
+		/// Value, can be converted to numeric from string value.
+		/// </summary>
+		[DataElement(AllowDbNull = true, Varchar=255)]
+		public string Value {
+			get { return m_value; }
+			set { Dirty = true; m_value = value; }
 		}
 			
 	}

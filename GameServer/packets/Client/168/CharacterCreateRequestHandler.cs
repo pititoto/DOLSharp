@@ -573,7 +573,6 @@ namespace DOL.GS.PacketHandler.Client.v168
 						if (Properties.BACKUP_DELETED_CHARACTERS)
 						{
 							var backupCharacter = new DOLCharactersBackup(character);
-							backupCharacter.CustomParams.ForEach(param => GameServer.Database.AddObject(param));
 							GameServer.Database.AddObject(backupCharacter);
 							
 							if (log.IsWarnEnabled)
@@ -585,8 +584,11 @@ namespace DOL.GS.PacketHandler.Client.v168
 
 							try
 							{
-								var objs = GameServer.Database.SelectObjects<InventoryItem>("`OwnerID` = @OwnerID", new QueryParameter("@OwnerID", character.ObjectId));
-								GameServer.Database.DeleteObject(objs);
+								var objs = GameServer.Database.SelectObjects<InventoryItem>(string.Format("OwnerID = '{0}'", GameServer.Database.Escape(character.ObjectId)));
+								foreach (InventoryItem item in objs)
+								{
+									GameServer.Database.DeleteObject(item);
+								}
 							}
 							catch (Exception e)
 							{
@@ -597,8 +599,11 @@ namespace DOL.GS.PacketHandler.Client.v168
 							// delete quests
 							try
 							{
-								var objs = GameServer.Database.SelectObjects<DBQuest>("`Character_ID` = @Character_ID", new QueryParameter("@Character_ID", character.ObjectId));
-								GameServer.Database.DeleteObject(objs);
+								var objs = GameServer.Database.SelectObjects<DBQuest>(string.Format("Character_ID = '{0}'", GameServer.Database.Escape(character.ObjectId)));
+								foreach (DBQuest quest in objs)
+								{
+									GameServer.Database.DeleteObject(quest);
+								}
 							}
 							catch (Exception e)
 							{
@@ -609,8 +614,11 @@ namespace DOL.GS.PacketHandler.Client.v168
 							// delete ML steps
 							try
 							{
-								var objs = GameServer.Database.SelectObjects<DBCharacterXMasterLevel>("`Character_ID` = @Character_ID", new QueryParameter("@Character_ID", character.ObjectId));
-								GameServer.Database.DeleteObject(objs);
+								var objs = GameServer.Database.SelectObjects<DBCharacterXMasterLevel>(string.Format("Character_ID = '{0}'", GameServer.Database.Escape(character.ObjectId)));
+								foreach (DBCharacterXMasterLevel mlstep in objs)
+								{
+									GameServer.Database.DeleteObject(mlstep);
+								}
 							}
 							catch (Exception e)
 							{

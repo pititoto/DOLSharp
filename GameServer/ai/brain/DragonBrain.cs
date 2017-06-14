@@ -78,13 +78,6 @@ namespace DOL.AI.Brain
 					AttackMostWanted();
 					return;
 				}
-				else
-				{
-					if (Body.AttackState)
-						Body.StopAttack();
-
-					Body.TargetObject = null;
-				}
 			}
 			
             // If dragon has run out of tether range, clear aggro list and let it 

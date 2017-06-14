@@ -20,12 +20,10 @@ using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-
+using System.Timers;
 using DOL.Database;
 using DOL.Events;
 using DOL.GS.PacketHandler;
-
 using log4net;
 
 namespace DOL.GS.Keeps
@@ -766,7 +764,7 @@ namespace DOL.GS.Keeps
 		public virtual void Claim(GamePlayer player)
 		{
 			this.m_guild = player.Guild;
-			
+			player.Guild.ClaimedKeeps.Add(this);
 			if (ServerProperties.Properties.GUILDS_CLAIM_LIMIT > 1)
 				player.Guild.SendMessageToGuildMembers("Your guild has currently claimed " + player.Guild.ClaimedKeeps.Count + " keeps of a maximum of " + ServerProperties.Properties.GUILDS_CLAIM_LIMIT, eChatType.CT_Guild, eChatLoc.CL_ChatWindow);
 
@@ -783,11 +781,10 @@ namespace DOL.GS.Keeps
 			{
 				banner.ChangeGuild();
 			}
-    		this.SaveIntoDatabase();
-            LoadFromDatabase(DBKeep);
-            StartDeductionTimer();
-            GameEventMgr.Notify(KeepEvent.KeepClaimed, this, new KeepEventArgs(this));
-        }
+			GameEventMgr.Notify(KeepEvent.KeepClaimed, this, new KeepEventArgs(this));
+			StartDeductionTimer();
+			this.SaveIntoDatabase();
+		}
 
 		/// <summary>
 		/// Starts the deduction timer
@@ -1250,8 +1247,7 @@ namespace DOL.GS.Keeps
 			int height = GameServer.KeepManager.GetHeightFromLevel(this.Level);
 
 			//predict Z
-			DBKeepHookPoint hp = GameServer.Database.SelectObjects<DBKeepHookPoint>("`HookPointID` = @HookPointID AND `Height` = @Height",
-			                                                                        new[] { new QueryParameter("@HookPointID", 97), new QueryParameter("@Height", height) }).FirstOrDefault();
+			DBKeepHookPoint hp = GameServer.Database.SelectObject<DBKeepHookPoint>("HookPointID = '97' and Height = '" + height + "'");
 			if (hp == null)
 				return;
 			int z = component.Z + hp.Z;

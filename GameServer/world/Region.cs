@@ -603,6 +603,16 @@ namespace DOL.GS
             set { }
         }
 
+
+        /// <summary>
+        /// Get the weather manager for this region
+        /// By default use WeatherMgr
+        /// </summary>
+        public virtual void SendWeather(GamePlayer player)
+        {
+            WeatherMgr.SendWeather(WeatherMgr.GetWeatherForRegion(ID), player);
+        }
+
         /// <summary>
         /// Create the appropriate GameKeep for this region
         /// </summary>
@@ -790,8 +800,8 @@ namespace DOL.GS
                 return;
 
             Assembly gasm = Assembly.GetAssembly(typeof(GameServer));
-            var staticObjs = GameServer.Database.SelectObjects<WorldObject>("`Region` = @Region", new QueryParameter("@Region", ID));
-            var bindPoints = GameServer.Database.SelectObjects<BindPoint>("`Region` = @Region", new QueryParameter("@Region", ID));
+            var staticObjs = GameServer.Database.SelectObjects<WorldObject>("Region = " + ID);
+            var bindPoints = GameServer.Database.SelectObjects<BindPoint>("Region = " + ID);
             int count = mobObjs.Length + staticObjs.Count;
             if (count > 0) PreAllocateRegionSpace(count + 100);
             int myItemCount = staticObjs.Count;

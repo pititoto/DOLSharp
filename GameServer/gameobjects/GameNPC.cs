@@ -1973,8 +1973,11 @@ namespace DOL.GS
 			{
 				try
 				{
+					var asms = new List<Assembly>();
+					asms.Add(typeof(GameServer).Assembly);
+					asms.AddRange(ScriptMgr.Scripts);
 					ABrain brain = null;
-					foreach (Assembly asm in ScriptMgr.GameServerScripts)
+					foreach (Assembly asm in asms)
 					{
 						brain = (ABrain)asm.CreateInstance(dbMob.Brain, false);
 						if (brain != null)
@@ -2980,7 +2983,7 @@ namespace DOL.GS
 		{
 			// list of ambient texts
 			if (!string.IsNullOrEmpty(Name))
-				ambientTexts = GameServer.Instance.NpcManager.AmbientBehaviour[Name];
+				ambientTexts = GameServer.Database.SelectObjects<MobXAmbientBehaviour>("`Source` ='" + GameServer.Database.Escape(Name) + "';");
 		}
 
 		/// <summary>

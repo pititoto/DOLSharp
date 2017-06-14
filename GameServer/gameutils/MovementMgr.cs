@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using DOL.Database;
@@ -38,11 +38,11 @@ namespace DOL.GS.Movement
 
 		private static Dictionary<string, DBPath> m_pathCache = new Dictionary<string, DBPath>();
 		private static Dictionary<string, SortedList<int, DBPathPoint>> m_pathpointCache = new Dictionary<string, SortedList<int, DBPathPoint>>();
-		private static object LockObject = new object();
+
 		/// <summary>
 		/// Cache all the paths and pathpoints
 		/// </summary>
-		private static void FillPathCache()
+		public static void FillPathCache()
 		{
 			IList<DBPath> allPaths = GameServer.Database.SelectAllObjects<DBPath>();
 			foreach (DBPath path in allPaths)
@@ -82,7 +82,7 @@ namespace DOL.GS.Movement
 		{
 			log.DebugFormat("Updating path {0} in path cache.", pathID);
 
-			DBPath dbpath = GameServer.Database.SelectObjects<DBPath>("`PathID` = @PathID", new QueryParameter("@PathID", pathID)).FirstOrDefault();
+			DBPath dbpath = GameServer.Database.SelectObject<DBPath>("PathID='" + GameServer.Database.Escape(pathID) + "'");
 			if (dbpath != null)
 			{
 				if (m_pathCache.ContainsKey(pathID))
@@ -95,7 +95,7 @@ namespace DOL.GS.Movement
 				}
 			}
 
-			IList<DBPathPoint> pathPoints = GameServer.Database.SelectObjects<DBPathPoint>("`PathID` = @PathID", new QueryParameter("@PathID", pathID));
+			IList<DBPathPoint> pathPoints = GameServer.Database.SelectObjects<DBPathPoint>("PathID='" + GameServer.Database.Escape(pathID) + "'");
 			SortedList<int, DBPathPoint> pList = new SortedList<int, DBPathPoint>();
 			if (m_pathpointCache.ContainsKey(pathID))
 			{
@@ -119,62 +119,59 @@ namespace DOL.GS.Movement
         /// <returns>first pathpoint of path or null if not found</returns>
         public static PathPoint LoadPath(string pathID)
         {
-        	lock(LockObject)
-        	{
-	        	if (m_pathCache.Count == 0)
-				{
-					FillPathCache();
-				}
-	
-				DBPath dbpath = null;
-	
-				if (m_pathCache.ContainsKey(pathID))
-				{
-					dbpath = m_pathCache[pathID];
-				}
-	
-				// even if path entry not found see if pathpoints exist and try to use it
-	
-	            ePathType pathType = ePathType.Once;
-	
-	            if (dbpath != null)
-	            {
-	                pathType = (ePathType)dbpath.PathType;
-	            }
-	
-				SortedList<int, DBPathPoint> pathPoints = null;
-	
-				if (m_pathpointCache.ContainsKey(pathID))
-				{
-					pathPoints = m_pathpointCache[pathID];
-				}
-				else
-				{
-					pathPoints = new SortedList<int, DBPathPoint>();
-				}
-	
-	            PathPoint prev = null;
-	            PathPoint first = null;
-	
-				foreach (DBPathPoint pp in pathPoints.Values)
-				{
-					PathPoint p = new PathPoint(pp.X, pp.Y, pp.Z, pp.MaxSpeed, pathType);
-					p.WaitTime = pp.WaitTime;
-	
-					if (first == null)
-					{
-						first = p;
-					}
-					p.Prev = prev;
-					if (prev != null)
-					{
-						prev.Next = p;
-					}
-					prev = p;
-				}
+			if (m_pathCache.Count == 0)
+			{
+				FillPathCache();
+			}
 
-            	return first;
-        	}
+			DBPath dbpath = null;
+
+			if (m_pathCache.ContainsKey(pathID))
+			{
+				dbpath = m_pathCache[pathID];
+			}
+
+			// even if path entry not found see if pathpoints exist and try to use it
+
+            ePathType pathType = ePathType.Once;
+
+            if (dbpath != null)
+            {
+                pathType = (ePathType)dbpath.PathType;
+            }
+
+			SortedList<int, DBPathPoint> pathPoints = null;
+
+			if (m_pathpointCache.ContainsKey(pathID))
+			{
+				pathPoints = m_pathpointCache[pathID];
+			}
+			else
+			{
+				pathPoints = new SortedList<int, DBPathPoint>();
+			}
+
+            PathPoint prev = null;
+            PathPoint first = null;
+
+			foreach (DBPathPoint pp in pathPoints.Values)
+			{
+				PathPoint p = new PathPoint(pp.X, pp.Y, pp.Z, pp.MaxSpeed, pathType);
+				p.WaitTime = pp.WaitTime;
+
+				if (first == null)
+				{
+					first = p;
+				}
+				p.Prev = prev;
+				if (prev != null)
+				{
+					prev.Next = p;
+				}
+				prev = p;
+			}
+
+            return first;
         }
 
         /// <summary>
@@ -191,13 +188,16 @@ namespace DOL.GS.Movement
 
 			// First delete any path with this pathID from the database
 
-			DBPath dbpath = GameServer.Database.SelectObjects<DBPath>("`PathID` = @PathID", new QueryParameter("@PathID", pathID)).FirstOrDefault();
+			DBPath dbpath = GameServer.Database.SelectObject<DBPath>("PathID='" + GameServer.Database.Escape(pathID) + "'");
 			if (dbpath != null)
 			{
 				GameServer.Database.DeleteObject(dbpath);
 			}
 
-			GameServer.Database.DeleteObject(GameServer.Database.SelectObjects<DBPathPoint>("`PathID` = @PathID", new QueryParameter("@PathID", pathID)));
+            foreach (DBPathPoint pp in GameServer.Database.SelectObjects<DBPathPoint>("PathID='" + GameServer.Database.Escape(pathID) + "'"))
+            {
+                GameServer.Database.DeleteObject(pp);
+            }
 
 			// Now add this path and iterate through the PathPoint linked list to add all the path points
 

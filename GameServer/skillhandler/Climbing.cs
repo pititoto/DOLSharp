@@ -17,8 +17,7 @@
  *
  */
 using System;
-using System.Linq;
-
+using DOL.GS.PacketHandler;
 using DOL.GS;
 using DOL.Database;
 
@@ -57,7 +56,7 @@ namespace DOL.GS.SkillHandler
 			if (spellid == -1)
 			{
 				spellid=0;
-				DBSpell climbSpell = GameServer.Database.SelectObjects<DBSpell>("`Name` = @Name", new QueryParameter("@Name", Abilities.ClimbSpikes)).FirstOrDefault();
+				DBSpell climbSpell = GameServer.Database.SelectObject<DBSpell>("Name = '" + Abilities.ClimbSpikes.ToString() + "'");
 				if (climbSpell != null)
 					spellid = climbSpell.SpellID;
 			}

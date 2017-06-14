@@ -68,8 +68,9 @@ namespace DOL.GS
 					// If we cache ALL items them all vault code must make sure to update cache, which is not ideal
 					// in addition, a player with a housing vault may still have an item in cache that may have been
 					// removed by another player with the appropriate house permission.  - Tolakram
-					var items = GameServer.Database.SelectObjects<InventoryItem>("`OwnerID` = @OwnerID AND (`SlotPosition` <= @LastVault OR (`SlotPosition` >= @OtherMin AND `SlotPosition` < @OtherMax))",
-					                                                             new[] { new QueryParameter("@OwnerID", inventoryID), new QueryParameter("@LastVault", (int)eInventorySlot.LastVault), new QueryParameter("@OtherMin", 500), new QueryParameter("@OtherMax", 600) });
+					var items = GameServer.Database.SelectObjects<InventoryItem>("OwnerID = '" + GameServer.Database.Escape(inventoryID) +
+					                                                             "' AND (SlotPosition <= " + (int)eInventorySlot.LastVault +
+					                                                             " OR (SlotPosition >= 500 AND SlotPosition < 600))");
 
 					foreach (InventoryItem item in items)
 					{
@@ -250,7 +251,7 @@ namespace DOL.GS
 
 								// Check database to make sure player still owns this item before saving
 
-								InventoryItem checkItem = GameServer.Database.FindObjectByKey<InventoryItem>(currentItem.ObjectId);
+								InventoryItem checkItem = GameServer.Database.SelectObject<InventoryItem>("Inventory_ID = '" + currentItem.ObjectId + "'");
 
 								if (checkItem == null || checkItem.OwnerID != m_player.InternalID)
 								{

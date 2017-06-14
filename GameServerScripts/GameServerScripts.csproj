@@ -27,49 +27,57 @@
     <TargetFrameworkVersion Condition=" '$(OS)' != 'Unix' ">v4.5.1</TargetFrameworkVersion>
     <TargetFrameworkVersion Condition=" '$(OS)' == 'Unix' ">v4.5</TargetFrameworkVersion>
     <SourceAnalysisOverrideSettingsFile>C:\Users\Jql\AppData\Roaming\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-    <NoStdLib>False</NoStdLib>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <NoStdLib>false</NoStdLib>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-    <OutputPath>..\$(Configuration)\lib\</OutputPath>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <OutputPath>obj\</OutputPath>
     <TargetFrameworkProfile />
-    <NoWin32Manifest>False</NoWin32Manifest>
-    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <BaseIntermediateOutputPath>..\build\GameServerScripts\$(Configuration)\</BaseIntermediateOutputPath>
-    <IntermediateOutputPath>..\build\GameServerScripts\$(Configuration)\obj\</IntermediateOutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <Optimize>False</Optimize>
-    <DebugType>Full</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <DebugType>Full</DebugType>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>None</DebugType>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
     <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <DebugType>None</DebugType>
     <ErrorReport>prompt</ErrorReport>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
     <PlatformTarget>x86</PlatformTarget>
-    <RegisterForComInterop>False</RegisterForComInterop>
+    <RegisterForComInterop>false</RegisterForComInterop>
     <BaseAddress>285212672</BaseAddress>
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net">
-      <HintPath>..\packages\log4net.2.0.4\lib\net45-full\log4net.dll</HintPath>
+      <HintPath>..\sharedModules\log4net\log4net.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
     <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Xml">
@@ -102,7 +110,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="behaviour\examples\TestBehaviour.cs" />
-    <Compile Include="commands\player\anonymous.cs" />
     <Compile Include="commands\serverinfo.cs" />
     <Compile Include="commands\SwitchCommandHandler.cs" />
     <Compile Include="commands\version.cs" />
@@ -118,7 +125,6 @@
     </Compile>
     <Compile Include="dbupdater\AutoXMLDatabaseUpdate.cs" />
     <Compile Include="dbupdater\AutoXMLUpdateTable.cs" />
-    <Compile Include="dbupdater\GuildAndAllianceUpdate.cs" />
     <Compile Include="dbupdater\LanguageSystemUpdate.cs" />
     <Compile Include="dbupdater\LoaderUnloaderXML.cs" />
     <Compile Include="dbupdater\SalvageYieldsUpdate.cs" />
@@ -149,11 +155,10 @@
     <Compile Include="globals.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="web\OnlineStatusUpdate.cs" />
-    <Compile Include="web\WebUIGenerator.cs">
+    <Compile Include="gameevents\WebUIGenerator.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="web\XMLWebUIGenerator.cs">
+    <Compile Include="gameevents\XMLWebUIGenerator.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="quests\Albion\AFewRepairs.cs" />
@@ -272,23 +277,20 @@
     <Compile Include="titles\TimeBasedTitle.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="dbupdater\replace\" />
-    <Folder Include="dbupdater\unload\" />
+    <Folder Include="dbupdater" />
+    <Folder Include="dbupdater\insert" />
+    <Folder Include="dbupdater\replace" />
+    <Folder Include="dbupdater\unload" />
+    <Folder Include="titles" />
+    <Folder Include="startup" />
+    <Folder Include="startup\command" />
+    <Folder Include="startup\dataobject" />
+    <Folder Include="startup\command" />
+    <Folder Include="startup\script" />
   </ItemGroup>
   <ItemGroup>
     <None Include="quests\Albion\BaseFrederickPathPoints.xml" />
     <None Include="quests\Hibernia\BaseAddrirPathPoints.xml" />
-    <None Include="web\OnlineStatusUpdateServerFiles\serverinfo.php" />
-    <None Include="web\OnlineStatusUpdateServerFiles\showplayers.php" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="web\OnlineStatusUpdateServerFiles\how to use php files.txt" />
-    <None Include="web\OnlineStatusUpdateServerFiles\players.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="dbupdater\insert\Regions.xml" />
-    <Content Include="dbupdater\insert\StartupLocation.xml" />
-    <Content Include="dbupdater\insert\Zones.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

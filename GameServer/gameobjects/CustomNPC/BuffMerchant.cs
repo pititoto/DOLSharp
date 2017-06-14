@@ -1,23 +1,4 @@
-﻿/*
- * DAWN OF LIGHT - The first free open source DAoC server emulator
- * 
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- */
-
-/* Created by Shawn
+﻿/* Created by Shawn
  * Date : March 29 2011
  * Version : 1.0
  * 
@@ -33,16 +14,17 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Collections;
 
 using DOL.Events;
 using DOL.Database;
+using DOL.AI.Brain;
 using DOL.Language;
 using DOL.GS;
 using DOL.GS.Spells;
 using DOL.GS.PacketHandler;
+using DOL.GS.Effects;
 
 using log4net;
 
@@ -1985,11 +1967,11 @@ public class BuffTokensList
 	[GameServerStartedEvent]
 	public static void OnServerStartup(DOLEvent e, object sender, EventArgs args)
 	{
-		ItemTemplate[] buffMerch = GameServer.Database.SelectObjects<ItemTemplate>("`PackageID` LIKE @PackageID", new QueryParameter("@PackageID", "BuffTokens")).OrderBy(it => it.Item_Type).ToArray();
+		ItemTemplate[] buffMerch = (ItemTemplate[])GameServer.Database.SelectObjects<ItemTemplate> ("PackageID like '" + GameServer.Database.Escape("BuffTokens") + "' ORDER by Item_Type");
 		MerchantItem m_item = null;
 		int pagenumber = 0;
 		int slotposition = 0;
-		m_item = GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID", new QueryParameter("@ItemListID", "BuffTokens")).FirstOrDefault();
+		m_item = (MerchantItem)GameServer.Database.SelectObject<MerchantItem>("ItemListID='BuffTokens'");
 		if (m_item == null)
 		{
 			foreach (ItemTemplate item in buffMerch)
@@ -2020,11 +2002,11 @@ public class BPBuffTokensList
 	[GameServerStartedEvent]
 	public static void OnServerStartup(DOLEvent e, object sender, EventArgs args)
 	{
-		ItemTemplate[] buffMerch = GameServer.Database.SelectObjects<ItemTemplate>("`PackageID` LIKE @PackageID", new QueryParameter("@PackageID", "BPBuffTokens")).OrderBy(it => it.Item_Type).ToArray();
+		ItemTemplate[] buffMerch = (ItemTemplate[])GameServer.Database.SelectObjects<ItemTemplate>("PackageID like '" + GameServer.Database.Escape("BPBuffTokens") + "' ORDER by Item_Type");
 		MerchantItem m_item = null;
 		int pagenumber = 0;
 		int slotposition = 0;
-		m_item = GameServer.Database.SelectObjects<MerchantItem>("`ItemListID` = @ItemListID", new QueryParameter("@ItemListID", "BPBuffTokens")).FirstOrDefault();
+		m_item = (MerchantItem)GameServer.Database.SelectObject<MerchantItem>("ItemListID='BPBuffTokens'");
 		if (m_item == null)
 		{
 			foreach (ItemTemplate item in buffMerch)

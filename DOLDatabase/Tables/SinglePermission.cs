@@ -31,8 +31,8 @@ namespace DOL.Database
 
 		public DBSinglePermission()
 		{
-			m_playerID = string.Empty;
-			m_command = string.Empty;
+			m_playerID = "";
+			m_command = "";
 		}
 
 		[DataElement(AllowDbNull = false, Index=true)]

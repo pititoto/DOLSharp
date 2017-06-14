@@ -217,15 +217,7 @@ namespace DOL.GS
 		public bool IsAnonymous
 		{
 			get { return DBCharacter != null ? DBCharacter.IsAnonymous && (ServerProperties.Properties.ANON_MODIFIER != -1) : false; }
-			set
-			{
-				var old = IsAnonymous;
-				if (DBCharacter != null)
-					DBCharacter.IsAnonymous = value;
-				
-				if (old != IsAnonymous)
-					GameEventMgr.Notify(GamePlayerEvent.ChangeAnonymous, this);
-			}
+			set { if (DBCharacter != null) DBCharacter.IsAnonymous = value; }
 		}
 
 		/// <summary>
@@ -402,8 +394,8 @@ namespace DOL.GS
 		/// </summary>
 		public string[] SerializedFriendsList
 		{
-			get { return DBCharacter != null ? DBCharacter.SerializedFriendsList.Split(',').Select(name => name.Trim()).Where(name => !string.IsNullOrEmpty(name)).ToArray() : new string[0]; }
-			set { if (DBCharacter != null) DBCharacter.SerializedFriendsList = string.Join(",", value.Select(name => name.Trim()).Where(name => !string.IsNullOrEmpty(name))); }
+			get { return DBCharacter != null ? DBCharacter.SerializedFriendsList.Split(',') : new string[0]; }
+			set { if (DBCharacter != null) DBCharacter.SerializedFriendsList = string.Join(",", value); }
 		}
 		
 		/// <summary>
@@ -442,8 +434,8 @@ namespace DOL.GS
 		/// </summary>
 		public string[] SerializedIgnoreList
 		{
-			get { return DBCharacter != null ? DBCharacter.SerializedIgnoreList.Split(',').Select(name => name.Trim()).Where(name => !string.IsNullOrEmpty(name)).ToArray() : new string[0]; }
-			set { if (DBCharacter != null) DBCharacter.SerializedIgnoreList = string.Join(",", value.Select(name => name.Trim()).Where(name => !string.IsNullOrEmpty(name))); }
+			get { return DBCharacter != null ? DBCharacter.SerializedIgnoreList.Split(',') : new string[0]; }
+			set { if (DBCharacter != null) DBCharacter.SerializedIgnoreList = string.Join(",", value); }
 		}
 
 		/// <summary>
@@ -1753,59 +1745,24 @@ namespace DOL.GS
 		}
 		
 		/// <summary>
-		/// Death types ingame
-		/// </summary>
-		public enum eDeathType
-		{
-			PvE,
-			RvR,
-			PvP,
-			None,
-		}
-		
-		/// <summary>
-		/// The current death type
-		/// </summary>
-		protected eDeathType m_deathtype;
-
-		/// <summary>
-		/// Gets the player's current death type.
-		/// </summary>
-		public eDeathType DeathType
-		{
-			get { return m_deathtype; }
-			set { m_deathtype = value; }
-		}
-		/// <summary>
 		/// Called when player revive
 		/// </summary>
 		public virtual void OnRevive(DOLEvent e, object sender, EventArgs args)
 		{
 			GamePlayer player = (GamePlayer)sender;
-						
+			
 			if (player.IsUnderwater && player.CanBreathUnderWater == false)
 				player.Diving(waterBreath.Holding);
-			//We need two different sickness spells because RvR sickness is not curable by Healer NPC -Unty
-			if (player.Level > 5)
-			switch (DeathType)
-			{
-				case eDeathType.RvR:
-					SpellLine rvrsick = SkillBase.GetSpellLine(GlobalSpellsLines.Reserved_Spells);
-					if (rvrsick == null) return;
-					Spell rvrillness = SkillBase.FindSpell(8181, rvrsick);
-					player.CastSpell(rvrillness, rvrsick);
-					break;
-				case eDeathType.PvP: //PvP sickness is the same as PvE sickness - Curable
-				case eDeathType.PvE:
-					SpellLine pvesick = SkillBase.GetSpellLine(GlobalSpellsLines.Reserved_Spells);
-					if (pvesick == null) return;
-					Spell pveillness = SkillBase.FindSpell(2435, pvesick);
-					player.CastSpell(pveillness, pvesick);
-					break;
-			}
 			
+			if (player.Level > 5)
+			{
+				// get illness after level 5
+				SpellLine Line = SkillBase.GetSpellLine(GlobalSpellsLines.Reserved_Spells);
+				if (Line == null) return;
+				ISpellHandler spellHandler = ScriptMgr.CreateSpellHandler(player, GlobalSpells.PvERezIllness, Line);
+				spellHandler.StartSpell(player);
+			}
 			GameEventMgr.RemoveHandler(this, GamePlayerEvent.Revive, new DOLEventHandler(OnRevive));
-			m_deathtype = eDeathType.None;
 		}
 
 		/// <summary>
@@ -3609,7 +3566,7 @@ namespace DOL.GS
 		/// <returns></returns>
 		public override int GetModifiedSpecLevel(string keyName)
 		{
-			if (keyName.StartsWith(GlobalSpellsLines.Champion_Lines_StartWith))
+			if (keyName == GlobalSpellsLines.Champion_Spells)
 				return 50;
 
 			Specialization spec = null;
@@ -4133,7 +4090,7 @@ namespace DOL.GS
 				
 				string realm = string.Empty;
 				if (Realm == eRealm.Albion)
-					realm = "Albion";
+					realm = "Ablion";
 				else if (Realm == eRealm.Midgard)
 					realm = "Midgard";
 				else
@@ -4168,7 +4125,7 @@ namespace DOL.GS
 
 				try
 				{
-					return GlobalConstants.REALM_RANK_NAMES[(int)Realm - 1, (int)Gender - 1, (RealmLevel / 10)];
+					return GlobalConstants.REALM_RANK_NAMES[(int)Realm - 1, (int)Gender, (RealmLevel / 10)];
 				}
 				catch
 				{
@@ -7616,29 +7573,10 @@ namespace DOL.GS
 					xpLossPercent = MaxLevel - 40;
 				}
 
-				if (realmDeath) //Live PvP servers have 3 con loss on pvp death, can be turned off in server properties -Unty
+				if (realmDeath)
 				{
-					int conpenalty = 0;
-					switch (GameServer.Instance.Configuration.ServerType)
-					{
-						case eGameServerType.GST_Normal:
-								Out.SendMessage(LanguageMgr.GetTranslation(Client.Account.Language, "GamePlayer.Die.DeadRVR"), eChatType.CT_YouDied, eChatLoc.CL_SystemWindow);
-								xpLossPercent = 0;
-								m_deathtype = eDeathType.RvR;
-								break;
-								
-						case eGameServerType.GST_PvP:
-								Out.SendMessage(LanguageMgr.GetTranslation(Client.Account.Language, "GamePlayer.Die.DeadRVR"), eChatType.CT_YouDied, eChatLoc.CL_SystemWindow);
-								xpLossPercent = 0;
-								m_deathtype = eDeathType.PvP;
-								if (ServerProperties.Properties.PVP_DEATH_CON_LOSS)
-								{
-									conpenalty = 3;
-									TempProperties.setProperty(DEATH_CONSTITUTION_LOSS_PROPERTY, conpenalty);
-								}
-								break;
-				 	}
-					 
+					Out.SendMessage(LanguageMgr.GetTranslation(Client.Account.Language, "GamePlayer.Die.DeadRVR"), eChatType.CT_YouDied, eChatLoc.CL_SystemWindow);
+					xpLossPercent = 0;
 				}
 				else if (Level > 5) // under level 5 there is no penalty
 				{
@@ -7657,7 +7595,7 @@ namespace DOL.GS
 					}
 
 					DeathCount++;
-					m_deathtype = eDeathType.PvE;
+
 					long xpLoss = (ExperienceForNextLevel - ExperienceForCurrentLevel) * xpLossPercent / 1000;
 					GainExperience(eXPSource.Other, -xpLoss, 0, 0, 0, false, true);
 					TempProperties.setProperty(DEATH_EXP_LOSS_PROPERTY, xpLoss);
@@ -8281,7 +8219,7 @@ namespace DOL.GS
 
 			if (spell.InstrumentRequirement != 0 ||
 			    line.KeyName == GlobalSpellsLines.Item_Spells ||
-			    line.KeyName.StartsWith(GlobalSpellsLines.Champion_Lines_StartWith))
+			    line.KeyName.StartsWith(GlobalSpellsLines.Champion_Spells))
 			{
 				return ticks;
 			}
@@ -9955,7 +9893,16 @@ namespace DOL.GS
 		{			
 			// do some Cleanup
 			CleanupOnDisconnect();
-			
+
+			string[] friendList = new string[]
+			{
+				Name
+			};
+			foreach (GameClient clientp in WorldMgr.GetAllPlayingClients())
+			{
+				if (clientp.Player.Friends.Contains(Name))
+					clientp.Out.SendRemoveFriends(friendList);
+			}
 			if (Group != null)
 			{
 				Group.RemoveMember(this);
@@ -10309,6 +10256,30 @@ namespace DOL.GS
 		}
 
 		/// <summary>
+		/// Gets or sets the friends of this player
+		/// </summary>
+		public List<string> Friends
+		{
+			get
+			{
+				if (SerializedFriendsList.Length > 0)
+					return new List<string>(SerializedFriendsList);
+
+				return new List<string>();
+			}
+			set
+			{
+				if (value == null)
+					SerializedIgnoreList = new string[0];
+				else
+					SerializedFriendsList = value.ToArray();
+				
+				if (DBCharacter != null)
+					GameServer.Database.SaveObject(DBCharacter);
+			}
+		}
+
+		/// <summary>
 		/// Gets or sets the IgnoreList of a Player
 		/// (delegate to PlayerCharacter)
 		/// </summary>
@@ -10331,6 +10302,33 @@ namespace DOL.GS
 					GameServer.Database.SaveObject(DBCharacter);
 			}
 		}
+
+		/// <summary>
+		/// Modifies the friend list of this player
+		/// </summary>
+		/// <param name="friendName">the friend name</param>
+		/// <param name="remove">true to remove this friend, false to add it</param>
+		public void ModifyFriend(string friendName, bool remove)
+		{
+			var currentFriends = Friends;
+			if (remove && currentFriends != null)
+			{
+				if (currentFriends.Contains(friendName))
+				{
+					currentFriends.Remove(friendName);
+					Friends = currentFriends;
+				}
+			}
+			else
+			{
+				if (!currentFriends.Contains(friendName))
+				{
+					currentFriends.Add(friendName);
+					Friends = currentFriends;
+				}
+			}
+		}
+
 
 		/// <summary>
 		/// Modifies the friend list of this player
@@ -12536,7 +12534,7 @@ namespace DOL.GS
 			LoadQuests();
 
 			// Load Task object of player ...
-			var tasks = GameServer.Database.SelectObjects<DBTask>("`Character_ID` = @Character_ID", new QueryParameter("@Character_ID", InternalID));
+			var tasks = GameServer.Database.SelectObjects<DBTask>("Character_ID ='" + GameServer.Database.Escape(InternalID) + "'");
 			if (tasks.Count == 1)
 			{
 				m_task = AbstractTask.LoadFromDatabase(this, tasks[0]);
@@ -12548,7 +12546,7 @@ namespace DOL.GS
 			}
 
 			// Load ML steps of player ...
-			var mlsteps = GameServer.Database.SelectObjects<DBCharacterXMasterLevel>("`Character_ID` = @Character_ID", new QueryParameter("@Character_ID", QuestPlayerID));
+			var mlsteps = GameServer.Database.SelectObjects<DBCharacterXMasterLevel>("Character_ID ='" + GameServer.Database.Escape(QuestPlayerID) + "'");
 			if (mlsteps.Count > 0)
 			{
 				foreach (DBCharacterXMasterLevel mlstep in mlsteps)
@@ -12640,7 +12638,11 @@ namespace DOL.GS
 
 
 				if (m_mlSteps != null)
-					GameServer.Database.SaveObject(m_mlSteps.OfType<DBCharacterXMasterLevel>());
+				{
+					foreach (DBCharacterXMasterLevel mlstep in m_mlSteps)
+						if (mlstep != null)
+							GameServer.Database.SaveObject(mlstep);
+				}
 
 				if (log.IsInfoEnabled)
 					log.InfoFormat("{0} saved!", DBCharacter.Name);
@@ -13253,7 +13255,7 @@ namespace DOL.GS
 			m_questListFinished.Clear();
 
 			// Scripted quests
-			var quests = GameServer.Database.SelectObjects<DBQuest>("`Character_ID` = @Character_ID", new QueryParameter("@Character_ID", QuestPlayerID));
+			var quests = GameServer.Database.SelectObjects<DBQuest>("Character_ID ='" + GameServer.Database.Escape(QuestPlayerID) + "'");
 			foreach (DBQuest dbquest in quests)
 			{
 				AbstractQuest quest = AbstractQuest.LoadFromDatabase(this, dbquest);
@@ -13267,10 +13269,10 @@ namespace DOL.GS
 			}
 
 			// Data driven quests for this player
-			var dataQuests = GameServer.Database.SelectObjects<CharacterXDataQuest>("`Character_ID` = @Character_ID", new QueryParameter("@Character_ID", QuestPlayerID));
+			var dataQuests = GameServer.Database.SelectObjects<CharacterXDataQuest>("Character_ID ='" + GameServer.Database.Escape(QuestPlayerID) + "'");
 			foreach (CharacterXDataQuest quest in dataQuests)
 			{
-				DBDataQuest dbDataQuest = GameServer.Database.FindObjectByKey<DBDataQuest>(quest.DataQuestID);
+				DBDataQuest dbDataQuest = GameServer.Database.SelectObject<DBDataQuest>("ID = " + quest.DataQuestID);
 				if (dbDataQuest != null && dbDataQuest.StartType != (byte)DataQuest.eStartType.Collection)
 				{
 					DataQuest dataQuest = new DataQuest(this, dbDataQuest, quest);
@@ -13847,12 +13849,12 @@ namespace DOL.GS
 		/// </summary>
 		public virtual void CraftItem(ushort itemID)
 		{
-			DBCraftedItem recipe = GameServer.Database.FindObjectByKey<DBCraftedItem>(itemID.ToString());
+			DBCraftedItem recipe = GameServer.Database.SelectObject<DBCraftedItem>("CraftedItemID ='" + GameServer.Database.Escape(itemID.ToString()) + "'");
 			if (recipe != null)
 			{
 				ItemTemplate itemToCraft = null;
 				itemToCraft = GameServer.Database.FindObjectByKey<ItemTemplate>(recipe.Id_nb);
-				IList<DBCraftedXItem> rawMaterials = GameServer.Database.SelectObjects<DBCraftedXItem>("`CraftedItemId_nb` = @CraftedItemId_nb", new QueryParameter("@CraftedItemId_nb", recipe.Id_nb));
+				IList<DBCraftedXItem> rawMaterials = GameServer.Database.SelectObjects<DBCraftedXItem>("`CraftedItemId_nb` = '" + recipe.Id_nb + "'");
 				if (rawMaterials.Count > 0)
 				{
 					if (itemToCraft != null)

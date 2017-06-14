@@ -50,7 +50,7 @@ namespace DOL.Database
 			m_health = 0;
 			m_keepID = 0;
 			m_keepComponentID = 0;
-			m_createInfo = string.Empty;
+			m_createInfo = "";
 		}
 
 		/// <summary>
@@ -174,7 +174,7 @@ namespace DOL.Database
 		/// <summary>
 		/// Index of component
 		/// </summary>
-		[DataElement(AllowDbNull=true, Index = true)]
+		[DataElement(AllowDbNull=true)]
 		public int ID
 		{
 			get

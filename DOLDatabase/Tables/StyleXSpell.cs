@@ -65,7 +65,7 @@ namespace DOL.Database
 		/// <summary>
 		/// The StyleID
 		/// </summary>
-		[DataElement(AllowDbNull = false, Index = true)]
+		[DataElement(AllowDbNull = false)]
 		public int StyleID
 		{
 			get { return m_StyleID; }

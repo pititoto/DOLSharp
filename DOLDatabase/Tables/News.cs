@@ -42,7 +42,7 @@ namespace DOL.Database
 			m_creationDate = DateTime.Now;
 			m_type = 0;
 			m_realm = 0;
-			m_text = string.Empty;
+			m_text = "";
 		}
 
 		[DataElement(AllowDbNull = false)]
