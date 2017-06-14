@@ -794,18 +794,7 @@ namespace DOL.GS
         MythicalSafeFall = 233,
         MythicalDiscumbering = 234,
         MythicalCoin = 235,
-        // 236 - 246 used for Mythical Stat Cap
-        MythicalStatCapBonus_First = 236,
-        MythicalStrCapBonus = 236,
-        MythicalDexCapBonus = 237,
-        MythicalConCapBonus = 238,
-        MythicalQuiCapBonus = 239,
-        MythicalIntCapBonus = 240,
-        MythicalPieCapBonus = 241,
-        MythicalEmpCapBonus = 242,
-        MythicalChaCapBonus = 243,
-        MythicalAcuCapBonus = 244,
-        MythicalStatCapBonus_Last = 244,
+		// 236 - 246 Available
 
 		BountyPoints = 247,
 		XpPoints = 248,
@@ -905,6 +894,7 @@ namespace DOL.GS
 		Theurgist = 5,
 		Wizard = 7,
 		MaulerAlb = 60,
+		PaladinXL = 99,
 
 		//mid classes
 		Berserker = 31,
@@ -1033,7 +1023,7 @@ namespace DOL.GS
 		public const string Mob_Spells = "Mob Spells";
 		public const string Character_Abilities = "Character Abilities"; // dirty tricks, flurry ect...
 		public const string Item_Spells = "Item Spells";	// Combine scroll etc.
-		public const string Champion_Lines_StartWith = "Champion ";
+		public const string Champion_Spells = "Champion Abilities";
 	}
 
 	public static class GlobalConstants
@@ -1893,7 +1883,8 @@ namespace DOL.GS
 				eCharacterClass.Reaver, 		// Reaver = 19,
 				eCharacterClass.Disciple,		// Disciple = 20,
 				eCharacterClass.Heretic, 		// Heretic = 33,
-				eCharacterClass.MaulerAlb		// Mauler_Alb = 60,
+				eCharacterClass.MaulerAlb,		// Mauler_Alb = 60,
+				eCharacterClass.PaladinXL 		// Paladin = 99,
 			}},
 			{eRealm.Midgard, new List<eCharacterClass>() {eCharacterClass.Viking, eCharacterClass.Mystic, eCharacterClass.Seer, eCharacterClass.MidgardRogue,
 				// post 1.93
@@ -1973,7 +1964,8 @@ namespace DOL.GS
 				eCharacterClass.Mage,
 				eCharacterClass.Elementalist,
 				eCharacterClass.AlbionRogue,
-				eCharacterClass.Disciple
+				eCharacterClass.Disciple,
+				eCharacterClass.PaladinXL
 				}},
 			{eRace.Avalonian, new List<eCharacterClass>() {eCharacterClass.Fighter, eCharacterClass.Acolyte, eCharacterClass.Mage, eCharacterClass.Elementalist,
 				// post 1.93
@@ -1990,7 +1982,8 @@ namespace DOL.GS
 				eCharacterClass.Fighter,
 				eCharacterClass.Acolyte,
 				eCharacterClass.Mage,
-				eCharacterClass.Elementalist
+				eCharacterClass.Elementalist,
+				eCharacterClass.PaladinXL
 				}},
 			{eRace.Highlander, new List<eCharacterClass>() {eCharacterClass.Fighter, eCharacterClass.Acolyte, eCharacterClass.AlbionRogue,
 				// post 1.93
@@ -2003,7 +1996,8 @@ namespace DOL.GS
 				eCharacterClass.Friar,
 				eCharacterClass.Fighter,
 				eCharacterClass.Acolyte,
-				eCharacterClass.AlbionRogue
+				eCharacterClass.AlbionRogue,
+				eCharacterClass.PaladinXL
 				}},
 			{eRace.Saracen, new List<eCharacterClass>() {eCharacterClass.Fighter, eCharacterClass.Mage, eCharacterClass.AlbionRogue, eCharacterClass.Disciple,
 				// post 1.93
@@ -2020,7 +2014,8 @@ namespace DOL.GS
 				eCharacterClass.Fighter,
 				eCharacterClass.Mage,
 				eCharacterClass.AlbionRogue,
-				eCharacterClass.Disciple
+				eCharacterClass.Disciple,
+				eCharacterClass.PaladinXL
 				}},
 			
 			{eRace.Norseman, new List<eCharacterClass>() {eCharacterClass.Viking, eCharacterClass.Mystic, eCharacterClass.Seer, eCharacterClass.MidgardRogue,
@@ -2458,10 +2453,10 @@ namespace DOL.GS
 		
 	}
 
-	public static class GlobalSpells
+	public class GlobalSpells
 	{
-		public const string PvEResurrectionIllnessSpellType = "PveResurrectionIllness";
-		private static Spell m_PvERezIllness;
+		public const string PvERessurectionIllnessSpellType = "PveResurrectionIllness";
+		private static Spell m_PvERezIllness = null;
 		public static Spell PvERezIllness
 		{
 			get
@@ -2476,42 +2471,12 @@ namespace DOL.GS
 					spell.SpellID = 2435;
 					spell.Name = LanguageMgr.GetTranslation(ServerProperties.Properties.DB_LANGUAGE, "GamePlayer.Spell.ResurrectionIllness");
 					spell.Range = 0;
-					spell.Duration = 300;
-					spell.Value = 30;
 					spell.Target = "Self";
-					spell.Type = PvEResurrectionIllnessSpellType;
+					spell.Type = PvERessurectionIllnessSpellType;
 					spell.Description = "The player's effectiveness is greatly reduced due to being recently resurrected.";
 					m_PvERezIllness = new Spell(spell, 50);
-					SkillBase.AddScriptedSpell(GlobalSpellsLines.Reserved_Spells, m_PvERezIllness);
 				}
 				return m_PvERezIllness;
-			}
-		}
-		public const string RvRResurrectionIllnessSpellType = "RvrResurrectionIllness";
-		private static Spell m_RvRRezIllness;
-		public static Spell RvRRezIllness
-		{
-			get
-			{
-				if (m_RvRRezIllness == null)
-				{
-					DBSpell spelltwo = new DBSpell();
-					spelltwo.AllowAdd = false;
-					spelltwo.CastTime = 0;
-					spelltwo.ClientEffect = 2435;
-					spelltwo.Icon = 2435;
-					spelltwo.SpellID = 8181;
-					spelltwo.Name = LanguageMgr.GetTranslation(ServerProperties.Properties.DB_LANGUAGE, "GamePlayer.Spell.RvrResurrectionIllness");
-					spelltwo.Range = 0;
-					spelltwo.Duration = 300;
-					spelltwo.Value = 50;
-					spelltwo.Target = "Self";
-					spelltwo.Type = RvRResurrectionIllnessSpellType;
-					spelltwo.Description = "The player's effectiveness is greatly reduced due to being recently resurrected.";
-					m_RvRRezIllness = new Spell(spelltwo, 50);
-					SkillBase.AddScriptedSpell(GlobalSpellsLines.Reserved_Spells, m_RvRRezIllness);
-				}
-				return m_RvRRezIllness;
 			}
 		}
 	}
