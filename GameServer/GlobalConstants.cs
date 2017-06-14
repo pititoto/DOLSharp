@@ -894,7 +894,6 @@ namespace DOL.GS
 		Theurgist = 5,
 		Wizard = 7,
 		MaulerAlb = 60,
-		PaladinXL = 99,
 
 		//mid classes
 		Berserker = 31,
@@ -1883,8 +1882,7 @@ namespace DOL.GS
 				eCharacterClass.Reaver, 		// Reaver = 19,
 				eCharacterClass.Disciple,		// Disciple = 20,
 				eCharacterClass.Heretic, 		// Heretic = 33,
-				eCharacterClass.MaulerAlb,		// Mauler_Alb = 60,
-				eCharacterClass.PaladinXL 		// Paladin = 99,
+				eCharacterClass.MaulerAlb		// Mauler_Alb = 60,
 			}},
 			{eRealm.Midgard, new List<eCharacterClass>() {eCharacterClass.Viking, eCharacterClass.Mystic, eCharacterClass.Seer, eCharacterClass.MidgardRogue,
 				// post 1.93
@@ -1964,8 +1962,7 @@ namespace DOL.GS
 				eCharacterClass.Mage,
 				eCharacterClass.Elementalist,
 				eCharacterClass.AlbionRogue,
-				eCharacterClass.Disciple,
-				eCharacterClass.PaladinXL
+				eCharacterClass.Disciple
 				}},
 			{eRace.Avalonian, new List<eCharacterClass>() {eCharacterClass.Fighter, eCharacterClass.Acolyte, eCharacterClass.Mage, eCharacterClass.Elementalist,
 				// post 1.93
@@ -1982,8 +1979,7 @@ namespace DOL.GS
 				eCharacterClass.Fighter,
 				eCharacterClass.Acolyte,
 				eCharacterClass.Mage,
-				eCharacterClass.Elementalist,
-				eCharacterClass.PaladinXL
+				eCharacterClass.Elementalist
 				}},
 			{eRace.Highlander, new List<eCharacterClass>() {eCharacterClass.Fighter, eCharacterClass.Acolyte, eCharacterClass.AlbionRogue,
 				// post 1.93
@@ -1996,8 +1992,7 @@ namespace DOL.GS
 				eCharacterClass.Friar,
 				eCharacterClass.Fighter,
 				eCharacterClass.Acolyte,
-				eCharacterClass.AlbionRogue,
-				eCharacterClass.PaladinXL
+				eCharacterClass.AlbionRogue
 				}},
 			{eRace.Saracen, new List<eCharacterClass>() {eCharacterClass.Fighter, eCharacterClass.Mage, eCharacterClass.AlbionRogue, eCharacterClass.Disciple,
 				// post 1.93
@@ -2014,8 +2009,7 @@ namespace DOL.GS
 				eCharacterClass.Fighter,
 				eCharacterClass.Mage,
 				eCharacterClass.AlbionRogue,
-				eCharacterClass.Disciple,
-				eCharacterClass.PaladinXL
+				eCharacterClass.Disciple
 				}},
 			
 			{eRace.Norseman, new List<eCharacterClass>() {eCharacterClass.Viking, eCharacterClass.Mystic, eCharacterClass.Seer, eCharacterClass.MidgardRogue,

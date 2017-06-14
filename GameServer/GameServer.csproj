@@ -1078,7 +1078,6 @@
     <Compile Include="packets\Server\PacketProcessor.cs" />
     <Compile Include="packets\Utils\MiniDelveWriter.cs" />
     <Compile Include="playerclasses\albion\ClassMaulerAlb.cs" />
-    <Compile Include="playerclasses\albion\ClassPaladinXL.cs" />
     <Compile Include="playerclasses\hibernia\ClassMaulerHib.cs" />
     <Compile Include="playerclasses\midgard\ClassMaulerMid.cs" />
     <Compile Include="playertitles\titles\level\ChampionTitle.cs" />
@@ -2408,7 +2407,6 @@
     <Compile Include="trainer\albion\PaladinTrainer.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="trainer\albion\PaladinXLTrainer.cs" />
     <Compile Include="trainer\albion\ReaverTrainer.cs">
       <SubType>Code</SubType>
     </Compile>
